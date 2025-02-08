@@ -23,7 +23,7 @@ class UserOnly
      */
     public function handle(Request $request, Closure $next): Response
     {
-        return $next($request);
+        // return $next($request);
         try {
             // $user2 = JWTAuth::parseToken()->authenticate();
             // Use the 'api' guard explicitly
