@@ -10,6 +10,25 @@ use Illuminate\Http\JsonResponse;
 class ProjectController extends Controller
 {
     /**
+     * Display a listing of projects based on Team ID.
+     *
+     * @param int $teamId
+     * @return JsonResponse
+     */
+    public function getProjectsByTeam(int $teamId): JsonResponse
+    {
+        $projects = Project::where('Team_ID', $teamId)->get();
+
+        if ($projects->isEmpty()) {
+            return response()->json(['message' => 'No projects found for this team'], 404);
+        }
+
+        return response()->json($projects);
+    }
+
+    //// The rest of this ProjectController is RESTful API methods ////
+
+    /**
      * Display a listing of the resource.
      *
      * @return JsonResponse

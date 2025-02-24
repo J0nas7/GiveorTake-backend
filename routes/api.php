@@ -5,7 +5,9 @@ use App\Http\Controllers\UserController;
 
 use App\Http\Controllers\OrganisationController;
 use App\Http\Controllers\ProjectController;
-
+use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TeamController;
+use App\Http\Controllers\TeamUserSeatController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\UserOnly;
 
@@ -22,6 +24,8 @@ Route::group(['middleware' => ['api', UserOnly::class]], function () {
      */
     Route::apiResource('users', UserController::class);
 
+
+    
     // OrganisationController Routes
     /**
      * GET /organisations - index
@@ -32,6 +36,40 @@ Route::group(['middleware' => ['api', UserOnly::class]], function () {
      * This single line of code handles all these CRUD routes:
      */
     Route::apiResource('organisations', OrganisationController::class);
+
+
+
+    // TeamController Routes
+    /**
+     * GET /teams - index
+     * POST /teams - store
+     * GET /teams/{team} - show
+     * PUT /teams/{team} - update
+     * DELETE /teams/{team} - destroy
+     * This single line of code handles all these CRUD routes:
+     */
+    Route::apiResource('teams', TeamController::class);
+    // Custom route to get teams by organisation ID
+    Route::get('organisations/{organisationId}/teams', [TeamController::class, 'getTeamsByOrganisation']);
+
+
+
+    // TeamUserSeatController Routes
+    /**
+     * GET /team-user-seats - index
+     * POST /team-user-seats - store
+     * GET /team-user-seats/{team-user-seat} - show
+     * PUT /team-user-seats/{team-user-seat} - update
+     * DELETE /team-user-seats/{team-user-seat} - destroy
+     * This single line of code handles all these CRUD routes:
+     */
+    Route::apiResource('team-user-seats', TeamUserSeatController::class);
+    // Custom route to find a seat by team ID and user ID
+    Route::get('team-user-seats/find/{team_id}/{user_id}', [TeamUserSeatController::class, 'findByTeamAndUser']);
+    // Custom route to find all teams by user ID
+    Route::get('team-user-seats/teams-by-user/{user_id}', [TeamUserSeatController::class, 'findTeamsByUserID']);
+
+    
     
     // ProjectController Routes
     /**
@@ -43,6 +81,25 @@ Route::group(['middleware' => ['api', UserOnly::class]], function () {
      * This single line of code handles all these CRUD routes:
      */
     Route::apiResource('projects', ProjectController::class);
+    // Custom route to get projects by team ID
+    Route::get('teams/{teamId}/projects', [ProjectController::class, 'getProjectsByTeam']);
+
+    
+    
+    // TaskController Routes
+    /**
+     * GET /tasks - index
+     * POST /tasks - store
+     * GET /tasks/{task} - show
+     * PUT /tasks/{task} - update
+     * DELETE /tasks/{task} - destroy
+     * This single line of code handles all these CRUD routes:
+     */
+    Route::apiResource('tasks', TaskController::class);
+    // Custom route to get tasks by project ID
+    Route::get('projects/{projectId}/tasks', [TaskController::class, 'getTasksByProject']);
+
+    
     
     // AuthController Routes
     /**
@@ -57,6 +114,8 @@ Route::group(['middleware' => ['api', UserOnly::class]], function () {
     });
 });
 
+
+
 // Public endpoints
 Route::group(['middleware' => ['api']], function () {
     Route::get('/', function () {
@@ -69,7 +128,7 @@ Route::group(['middleware' => ['api']], function () {
     Route::group(['middleware' => ['api']], function () {
         // Register a new user
         Route::post('/auth/register', [AuthController::class, 'register'])->name('auth.register');
-    
+
         // Login and generate JWT
         Route::post('/auth/login', [AuthController::class, 'login'])->name('auth.login');
     });
