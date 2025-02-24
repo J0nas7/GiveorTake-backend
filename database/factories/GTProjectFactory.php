@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Project;
-use App\Models\Organisation;
+use App\Models\Team;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class GTProjectFactory extends Factory
@@ -13,7 +13,7 @@ class GTProjectFactory extends Factory
     public function definition()
     {
         return [
-            'Organisation_ID'       => Organisation::factory()->new(), // Generate an organisation if one doesn't exist
+            'Team_ID'               => Team::factory()->new(), // Generate an organisation if one doesn't exist
             'Project_Name'          => $this->faker->sentence(3), // Random project name
             'Project_Description'   => $this->faker->paragraph, // Random project description
             'Project_Status'        => $this->faker->randomElement(['Planned', 'Active', 'Completed', 'On Hold']),

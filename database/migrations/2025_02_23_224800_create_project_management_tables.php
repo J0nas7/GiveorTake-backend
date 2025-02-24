@@ -42,7 +42,7 @@ class CreateProjectManagementTables extends Migration
             $prefix = 'Project_';
 
             $table->bigIncrements($prefix . 'ID'); // Primary key
-            $table->bigInteger('Organisation_ID')->unsigned(); // Foreign key to Organisations
+            $table->bigInteger('Team_ID')->unsigned(); // Foreign key to Organisations
             $table->string($prefix . 'Name', 255); // Project name
             $table->text($prefix . 'Description')->nullable(); // Project description
             $table->enum($prefix . 'Status', ['Planned', 'Active', 'Completed', 'On Hold'])->default('Planned'); // Status
@@ -50,8 +50,8 @@ class CreateProjectManagementTables extends Migration
             $table->date($prefix . 'End_Date')->nullable(); // End date
 
             MigrationHelper::addDateTimeFields($table, $prefix); // Add common dateTime fields
-
-            $table->foreign('Organisation_ID')->references('Organisation_ID')->on('GT_Organisations')->onDelete('cascade');
+            
+            $table->foreign('Team_ID')->references('Team_ID')->on('GT_Teams')->onDelete('cascade');
         });
 
         // Team Members table (linking users to teams)

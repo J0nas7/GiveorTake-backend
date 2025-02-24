@@ -14,7 +14,7 @@ class Project extends Model
     protected $primaryKey = 'Project_ID'; // Primary key
 
     protected $fillable = [
-        'Organisation_ID',
+        'Team_ID',
         'Project_Name',
         'Project_Description',
         'Project_Status',
@@ -28,9 +28,9 @@ class Project extends Model
     const DELETED_AT = 'Project_DeletedAt';
 
     // Relationships
-    public function organisation()
+    public function team()
     {
-        return $this->belongsTo(Organisation::class, 'Organisation_ID');
+        return $this->belongsTo(Team::class, 'Team_ID');
     }
 
     /**

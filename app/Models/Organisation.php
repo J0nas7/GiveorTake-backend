@@ -25,9 +25,9 @@ class Organisation extends Model
     const DELETED_AT = 'Organisation_DeletedAt';
 
     // Relationships
-    public function projects()
+    public function teams()
     {
-        return $this->hasMany(Project::class, 'Organisation_ID');
+        return $this->hasMany(Team::class, 'Organisation_ID');
     }
 
     public function user()
