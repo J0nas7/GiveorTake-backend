@@ -9,6 +9,6 @@ class GTUserSeeder extends Seeder
 {
     public function run()
     {
-        User::factory()->count(10)->create();
+        // User::factory()->count(10)->create();
     }
 }

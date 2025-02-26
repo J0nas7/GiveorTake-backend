@@ -48,10 +48,11 @@ class User extends Authenticatable implements JWTSubject
     const DELETED_AT = 'User_DeletedAt';
 
     // The database field that should be returned on Eloquent's request
-    public function getAuthPassword() {
+    public function getAuthPassword()
+    {
         return $this->User_Password;
     }
-    
+
     /**
      * Get the identifier that will be stored in the subject claim of the JWT.
      */

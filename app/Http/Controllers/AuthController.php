@@ -4,10 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Services\AuthService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Routing\Controller;
 
 class AuthController extends Controller
 {
     use AuthService;
+
+    public function __construct()
+    {
+        $this->middleware('auth:api', ['except' => ['login','register']]);
+    }
 
     /**
      * Register a new user.
@@ -34,14 +41,17 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $credentials = $request->only(['User_Email', 'User_Password']);
+        $credentials = $request->only(['User_Email', 'password']);
         $result = $this->authenticateUser($credentials);
 
         if (isset($result['error'])) {
-            return response()->json(['error' => $result['error']], 401);
+            return response()->json([
+                'error' => $result['error'],
+                $credentials
+            ], 401);
         }
 
-        return response()->json(['token' => $result['token']], 200);
+        return response()->json($result, 200);
     }
 
     /**
@@ -68,7 +78,10 @@ class AuthController extends Controller
             return response()->json(['error' => 'Not authenticated'], 401);
         }
 
-        return response()->json($user, 200);
+        return response()->json([
+            "success" => true,
+            "message" => "Is logged in",
+            "data" => $user
+        ], 200);
     }
 }
-?>

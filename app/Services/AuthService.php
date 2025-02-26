@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 trait AuthService
 {
@@ -54,11 +55,38 @@ trait AuthService
      */
     public function authenticateUser(array $credentials)
     {
-        if (!$token = Auth::attempt($credentials)) {
+        if (!$token = Auth::guard('api')->attempt($credentials)) {
             return ['error' => 'Invalid email or password'];
         }
+        
+        return [
+            'success' => true,
+            'message' => 'Login was successful',
+            'data' => [
+                'user' => Auth::guard('api')->user(),
+                'accessToken' => $token
+            ]
+        ];
+        // Manually query the database to find the user
+        /*$user = User::where('User_Email', $credentials['User_Email'])->first();
 
-        return ['token' => $token];
+        if ($user && Hash::check($credentials['User_Password'], $user->User_Password)) {
+            // Generate token and return it
+            $token = JWTAuth::fromUser($user);
+            // Authenticate the user for the current request
+            Auth::guard('api')->login($user);
+
+            return [
+                'success' => true,
+                'message' => 'Login was successful',
+                'data' => [
+                    'user' => Auth::guard('api')->user(),
+                    'accessToken' => $token
+                ]
+            ];
+        }
+    
+        return ['error' => 'Invalid email or password'];*/
     }
 
     /**
@@ -68,7 +96,7 @@ trait AuthService
      */
     public function logoutUser()
     {
-        Auth::logout();
+        Auth::guard('api')->logout();
         return true;
     }
 
@@ -79,6 +107,7 @@ trait AuthService
      */
     public function getAuthenticatedUser()
     {
-        return Auth::user();
+        $authUser = Auth::guard('api')->user();
+        return $authUser;
     }
 }

@@ -47,6 +47,7 @@ class MyDemoSeeder extends Seeder
                 'User_Surname' => $userData['User_Surname'],
                 'User_Email' => $userData['User_Email'],
                 'User_Password' => Hash::make('password123'),  // You can set a default password
+
                 'User_Status' => 1,
                 'User_Remember_Token' => Str::random(10),
                 'User_ImageSrc' => "",
@@ -93,52 +94,66 @@ class MyDemoSeeder extends Seeder
             ]);
 
             if ($project->Project_ID) {
-                $demoTasks = [
+                $demoTasks = [];
+                $taskNumber = 1;
+                
+                $tasks = [
                     // TODO
-                    ['Task_Title' => "Fix broken login page UI", 'Task_Status' => "To Do", 'Task_CreatedAt' => "2024-02-01", 'Assigned_User_ID' => 3],
-                    ['Task_Title' => "Implement user profile page", 'Task_Status' => "To Do", 'Task_CreatedAt' => "2024-02-02", 'Assigned_User_ID' => 1],
-                    ['Task_Title' => "Set up database schema for product inventory", 'Task_Status' => "To Do", 'Task_CreatedAt' => "2024-02-03", 'Assigned_User_ID' => 5],
-                    ['Task_Title' => "Create API endpoints for user registration", 'Task_Status' => "To Do", 'Task_CreatedAt' => "2024-02-04", 'Assigned_User_ID' => 2],
-                    ['Task_Title' => "Write unit tests for the order service", 'Task_Status' => "To Do", 'Task_CreatedAt' => "2024-02-05", 'Assigned_User_ID' => 4],
-                    ['Task_Title' => "Design homepage layout", 'Task_Status' => "To Do", 'Task_CreatedAt' => "2024-02-06", 'Assigned_User_ID' => 1],
-                    ['Task_Title' => "Update the README file with latest setup instructions", 'Task_Status' => "To Do", 'Task_CreatedAt' => "2024-02-07", 'Assigned_User_ID' => 2],
-                    ['Task_Title' => "Integrate third-party payment gateway", 'Task_Status' => "To Do", 'Task_CreatedAt' => "2024-02-08", 'Assigned_User_ID' => 5],
-                    ['Task_Title' => "Fix CSS issues in mobile view", 'Task_Status' => "To Do", 'Task_CreatedAt' => "2024-02-09", 'Assigned_User_ID' => 3],
-                    ['Task_Title' => "Audit API performance for slow endpoints", 'Task_Status' => "To Do", 'Task_CreatedAt' => "2024-02-10", 'Assigned_User_ID' => 4],
+                    ["Fix broken login page UI", "To Do", "2024-02-01", 3],
+                    ["Implement user profile page", "To Do", "2024-02-02", 1],
+                    ["Set up database schema for product inventory", "To Do", "2024-02-03", 5],
+                    ["Create API endpoints for user registration", "To Do", "2024-02-04", 2],
+                    ["Write unit tests for the order service", "To Do", "2024-02-05", 4],
+                    ["Design homepage layout", "To Do", "2024-02-06", 1],
+                    ["Update the README file with latest setup instructions", "To Do", "2024-02-07", 2],
+                    ["Integrate third-party payment gateway", "To Do", "2024-02-08", 5],
+                    ["Fix CSS issues in mobile view", "To Do", "2024-02-09", 3],
+                    ["Audit API performance for slow endpoints", "To Do", "2024-02-10", 4],
 
                     // IN-PROGRESS
-                    ['Task_Title' => "Refactor authentication service", 'Task_Status' => "In Progress", 'Task_CreatedAt' => "2024-01-30", 'Assigned_User_ID' => 2],
-                    ['Task_Title' => "Add user role management", 'Task_Status' => "In Progress", 'Task_CreatedAt' => "2024-01-28", 'Assigned_User_ID' => 1],
-                    ['Task_Title' => "Optimize product search functionality", 'Task_Status' => "In Progress", 'Task_CreatedAt' => "2024-01-27", 'Assigned_User_ID' => 5],
-                    ['Task_Title' => "Integrate email notification service", 'Task_Status' => "In Progress", 'Task_CreatedAt' => "2024-01-26", 'Assigned_User_ID' => 3],
-                    ['Task_Title' => "Implement infinite scroll for product list", 'Task_Status' => "In Progress", 'Task_CreatedAt' => "2024-01-25", 'Assigned_User_ID' => 4],
-                    ['Task_Title' => "Add pagination to user management page", 'Task_Status' => "In Progress", 'Task_CreatedAt' => "2024-01-24", 'Assigned_User_ID' => 2],
-                    ['Task_Title' => "Refactor user profile API to support file uploads", 'Task_Status' => "In Progress", 'Task_CreatedAt' => "2024-01-23", 'Assigned_User_ID' => 1],
-                    ['Task_Title' => "Update product page to show dynamic pricing", 'Task_Status' => "In Progress", 'Task_CreatedAt' => "2024-01-22", 'Assigned_User_ID' => 5],
+                    ["Refactor authentication service", "In Progress", "2024-01-30", 2],
+                    ["Add user role management", "In Progress", "2024-01-28", 1],
+                    ["Optimize product search functionality", "In Progress", "2024-01-27", 5],
+                    ["Integrate email notification service", "In Progress", "2024-01-26", 3],
+                    ["Implement infinite scroll for product list", "In Progress", "2024-01-25", 4],
+                    ["Add pagination to user management page", "In Progress", "2024-01-24", 2],
+                    ["Refactor user profile API to support file uploads", "In Progress", "2024-01-23", 1],
+                    ["Update product page to show dynamic pricing", "In Progress", "2024-01-22", 5],
 
                     // REVIEW
-                    ['Task_Title' => "Code review for new authentication service", 'Task_Status' => "Review", 'Task_CreatedAt' => "2024-01-15", 'Assigned_User_ID' => 3],
-                    ['Task_Title' => "Test new product filtering feature", 'Task_Status' => "Review", 'Task_CreatedAt' => "2024-01-14", 'Assigned_User_ID' => 2],
-                    ['Task_Title' => "Validate user role management security", 'Task_Status' => "Review", 'Task_CreatedAt' => "2024-01-13", 'Assigned_User_ID' => 4],
+                    ["Code review for new authentication service", "Review", "2024-01-15", 3],
+                    ["Test new product filtering feature", "Review", "2024-01-14", 2],
+                    ["Validate user role management security", "Review", "2024-01-13", 4],
 
                     // DONE
-                    ['Task_Title' => "Fix security vulnerabilities in the API", 'Task_Status' => "Done", 'Task_CreatedAt' => "2024-01-10", 'Assigned_User_ID' => 5],
-                    ['Task_Title' => "Completed basic design for dashboard layout", 'Task_Status' => "Done", 'Task_CreatedAt' => "2024-01-09", 'Assigned_User_ID' => 1],
-                    ['Task_Title' => "Setup CI/CD pipeline for automatic deployment", 'Task_Status' => "Done", 'Task_CreatedAt' => "2024-01-08", 'Assigned_User_ID' => 2],
-                    ['Task_Title' => "Write API documentation for public endpoints", 'Task_Status' => "Done", 'Task_CreatedAt' => "2024-01-07", 'Assigned_User_ID' => 3],
-                    ['Task_Title' => "Launch beta version of user onboarding flow", 'Task_Status' => "Done", 'Task_CreatedAt' => "2024-01-06", 'Assigned_User_ID' => 4],
-                    ['Task_Title' => "Implement password reset functionality", 'Task_Status' => "Done", 'Task_CreatedAt' => "2024-01-05", 'Assigned_User_ID' => 2],
-                    ['Task_Title' => "Integrate social login for users (Google, Facebook)", 'Task_Status' => "Done", 'Task_CreatedAt' => "2024-01-04", 'Assigned_User_ID' => 5],
-                    ['Task_Title' => "Optimize product image upload for faster speed", 'Task_Status' => "Done", 'Task_CreatedAt' => "2024-01-03", 'Assigned_User_ID' => 1],
-                    ['Task_Title' => "Fix bug where user is redirected after submitting the form", 'Task_Status' => "Done", 'Task_CreatedAt' => "2024-01-02", 'Assigned_User_ID' => 4],
-                    ['Task_Title' => "Upgrade dependencies to latest versions", 'Task_Status' => "Done", 'Task_CreatedAt' => "2024-01-01", 'Assigned_User_ID' => 3],
-                    ['Task_Title' => "Fix email template rendering issue", 'Task_Status' => "Done", 'Task_CreatedAt' => "2023-12-31", 'Assigned_User_ID' => 5],
-                    ['Task_Title' => "Refactor legacy code for better maintainability", 'Task_Status' => "Done", 'Task_CreatedAt' => "2023-12-30", 'Assigned_User_ID' => 2],
+                    ["Fix security vulnerabilities in the API", "Done", "2024-01-10", 5],
+                    ["Completed basic design for dashboard layout", "Done", "2024-01-09", 1],
+                    ["Setup CI/CD pipeline for automatic deployment", "Done", "2024-01-08", 2],
+                    ["Write API documentation for public endpoints", "Done", "2024-01-07", 3],
+                    ["Launch beta version of user onboarding flow", "Done", "2024-01-06", 4],
+                    ["Implement password reset functionality", "Done", "2024-01-05", 2],
+                    ["Integrate social login for users (Google, Facebook)", "Done", "2024-01-04", 5],
+                    ["Optimize product image upload for faster speed", "Done", "2024-01-03", 1],
+                    ["Fix bug where user is redirected after submitting the form", "Done", "2024-01-02", 4],
+                    ["Upgrade dependencies to latest versions", "Done", "2024-01-01", 3],
+                    ["Fix email template rendering issue", "Done", "2023-12-31", 5],
+                    ["Refactor legacy code for better maintainability", "Done", "2023-12-30", 2],
                 ];
+
+                foreach ($tasks as $task) {
+                    $demoTasks[] = [
+                        'Task_Number'    => $taskNumber++,
+                        'Task_Title'     => $task[0],
+                        'Task_Status'    => $task[1],
+                        'Task_CreatedAt' => $task[2],
+                        'Assigned_User_ID' => $task[3],
+                    ];
+                }
 
                 foreach ($demoTasks as $taskData) {
                     Task::create([
                         'Project_ID'             => $project->Project_ID,  // Associate the task with the specific project
+                        'Task_Number'            => $taskData['Task_Number'],
                         'Task_Title'             => $taskData['Task_Title'],
                         'Task_Status'            => $taskData['Task_Status'],
                         'Task_CreatedAt'         => $taskData['Task_CreatedAt'],

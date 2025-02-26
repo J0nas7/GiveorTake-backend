@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\UserOnly;
 
 // Protected UserOnly Routes
-Route::group(['middleware' => ['api', UserOnly::class]], function () {
+Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     // UserController Routes
     /**
      * GET /users - index
@@ -98,20 +98,6 @@ Route::group(['middleware' => ['api', UserOnly::class]], function () {
     Route::apiResource('tasks', TaskController::class);
     // Custom route to get tasks by project ID
     Route::get('projects/{projectId}/tasks', [TaskController::class, 'getTasksByProject']);
-
-    
-    
-    // AuthController Routes
-    /**
-     * Endpoints that require authentication.
-     */
-    Route::group(['middleware' => ['api']], function () {
-        // Logout the authenticated user
-        Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
-
-        // Get authenticated user details
-        Route::get('/auth/me', [AuthController::class, 'me'])->name('auth.me');
-    });
 });
 
 
@@ -131,5 +117,11 @@ Route::group(['middleware' => ['api']], function () {
 
         // Login and generate JWT
         Route::post('/auth/login', [AuthController::class, 'login'])->name('auth.login');
+
+        // Logout the authenticated user
+        Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
+
+        // Get authenticated user details (requires authentication)
+        Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth:api')->name('auth.me');
     });
 });

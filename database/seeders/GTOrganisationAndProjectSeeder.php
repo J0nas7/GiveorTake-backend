@@ -13,7 +13,7 @@ class GTOrganisationAndProjectSeeder extends Seeder
     {
         // Use the correct factory name
         // Create 10 organisations, each with 3 teams with a project each
-        Organisation::factory()->new()
+        /*Organisation::factory()->new()
             ->count(10)
             ->has(
                 Team::factory()->new()
@@ -23,6 +23,6 @@ class GTOrganisationAndProjectSeeder extends Seeder
                             ->count(1), 'projects'
                     ), 'teams'
             )
-            ->create();
+            ->create();*/
     }
 }
