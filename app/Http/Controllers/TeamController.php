@@ -35,7 +35,7 @@ class TeamController extends Controller
      */
     public function index(): JsonResponse
     {
-        $teams = Team::all(); // Get all teams
+        $teams = Team::with('organisation', 'projects')->get(); // Eager load organisation and projects
         return response()->json($teams); // Return teams as JSON
     }
 

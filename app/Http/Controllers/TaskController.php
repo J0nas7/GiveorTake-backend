@@ -35,7 +35,7 @@ class TaskController extends Controller
      */
     public function index(): JsonResponse
     {
-        $tasks = Task::all(); // Get all tasks
+        $tasks = Task::with('project')->get(); // Eager load team and user
         return response()->json($tasks); // Return tasks as JSON
     }
 
@@ -111,11 +111,10 @@ class TaskController extends Controller
     {
         $validated = $request->validate([
             'Project_ID' => 'required|integer|exists:GT_Projects,Project_ID', // Ensure the project exists
-            'Task_Name' => 'required|string|max:255',
+            'Task_Title' => 'required|string|max:255',
             'Task_Description' => 'nullable|string',
             'Task_Status' => 'required|string',
-            'Task_Start_Date' => 'required|date',
-            'Task_End_Date' => 'nullable|date',
+            'Task_Due_Date' => 'nullable|date',
         ]);
 
         $task = Task::find($id);

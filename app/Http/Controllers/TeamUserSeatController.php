@@ -62,7 +62,7 @@ class TeamUserSeatController extends Controller
      */
     public function index(): JsonResponse
     {
-        $seats = TeamUserSeat::all(); // Retrieve all seat assignments
+        $seats = TeamUserSeat::with('team.organisation', 'user')->get(); // Eager load team and user
         return response()->json($seats); // Return as JSON
     }
 

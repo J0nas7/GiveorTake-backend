@@ -30,6 +30,11 @@ class Team extends Model
         return $this->belongsTo(Organisation::class, 'Organisation_ID');
     }
 
+    public function userSeat()
+    {
+        return $this->hasMany(TeamUserSeat::class, 'Team_ID');
+    }
+
     public function projects()
     {
         return $this->hasMany(Project::class, 'Team_ID');

@@ -16,7 +16,7 @@ class OrganisationController extends Controller
      */
     public function index(): JsonResponse
     {
-        $organisations = Organisation::all(); // Get all organisations
+        $organisations = Organisation::with('teams.userSeat')->get(); // Eager load teams and userSeat
         return response()->json($organisations); // Return organisations as JSON
     }
 

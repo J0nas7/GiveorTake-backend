@@ -33,6 +33,11 @@ class Project extends Model
         return $this->belongsTo(Team::class, 'Team_ID');
     }
 
+    public function tasks()
+    {
+        return $this->hasMany(Task::class, 'Team_ID');
+    }
+
     /**
      * Get the factory for the model.
      *

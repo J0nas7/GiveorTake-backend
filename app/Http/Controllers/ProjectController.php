@@ -35,7 +35,7 @@ class ProjectController extends Controller
      */
     public function index(): JsonResponse
     {
-        $projects = Project::all(); // Get all projects
+        $projects = Project::with('team', 'tasks')->get(); // Eager load team and user
         return response()->json($projects); // Return projects as JSON
     }
 
@@ -110,7 +110,6 @@ class ProjectController extends Controller
     public function update(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate([
-            'Organisation_ID' => 'required|integer|exists:GT_Organisations,Organisation_ID', // Ensure the organisation exists
             'Project_Name' => 'required|string|max:255',
             'Project_Description' => 'nullable|string',
             'Project_Status' => 'required|string',

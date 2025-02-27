@@ -73,7 +73,7 @@ class CreateProjectManagementTables extends Migration
 
             // Foreign Key Constraints
             $table->foreign('Team_ID')->references('Team_ID')->on('GT_Teams')->onDelete('cascade');
-            $table->foreign('User_ID')->references('User_ID')->on('Users')->onDelete('cascade');
+            $table->foreign('User_ID')->references('User_ID')->on('GT_Users')->onDelete('cascade');
         });
 
         // Tasks table (assigned to projects & teams)
@@ -87,7 +87,7 @@ class CreateProjectManagementTables extends Migration
             $table->bigInteger('Assigned_User_ID')->unsigned()->nullable(); // Optional: Assign to a user
             $table->string($prefix . 'Title', 255);
             $table->text($prefix . 'Description')->nullable();
-            $table->enum($prefix . 'Status', ['To Do', 'In Progress', 'Review', 'Done'])->default('To Do');
+            $table->enum($prefix . 'Status', ['To Do', 'In Progress', 'Waiting for Review', 'Done'])->default('To Do');
             $table->date($prefix . 'Due_Date')->nullable();
 
             MigrationHelper::addDateTimeFields($table, $prefix); // Add common dateTime fields

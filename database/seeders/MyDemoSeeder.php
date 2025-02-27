@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\Team;
+use App\Models\TeamUserSeat;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -79,86 +80,94 @@ class MyDemoSeeder extends Seeder
                 'Team_DeletedAt'          => null, // Optional
             ]);
 
-            // Create a project under the team
-            $project = Project::create([
-                'Team_ID'                 => $team->Team_ID, // Link to the team
-                'Project_Name'            => 'Sample Project', // Set the project name
-                'Project_Description'     => 'This project is for managing time and tasks.', // Set project description
-                'Project_Status'          => 'Active', // Project status (e.g., active)
-                'Project_Start_Date'      => now(), // Set project start date
-                'Project_End_Date'        => now()->addMonths(3), // Set project end date (3 months from now)
+            if ($team->Team_ID) {
+                $seat = TeamUserSeat::create([
+                    'Team_ID'   => $team->Team_ID,
+                    'User_ID'   => $user->User_ID,
+                    'Seat_Role' => 'Member',  // Default role (change if needed)
+                ]);
 
-                'Project_CreatedAt'       => now(),
-                'Project_UpdatedAt'       => now(),
-                'Project_DeletedAt'       => null, // Optional
-            ]);
-
-            if ($project->Project_ID) {
-                $demoTasks = [];
-                $taskNumber = 1;
-                
-                $tasks = [
-                    // TODO
-                    ["Fix broken login page UI", "To Do", "2024-02-01", 3],
-                    ["Implement user profile page", "To Do", "2024-02-02", 1],
-                    ["Set up database schema for product inventory", "To Do", "2024-02-03", 5],
-                    ["Create API endpoints for user registration", "To Do", "2024-02-04", 2],
-                    ["Write unit tests for the order service", "To Do", "2024-02-05", 4],
-                    ["Design homepage layout", "To Do", "2024-02-06", 1],
-                    ["Update the README file with latest setup instructions", "To Do", "2024-02-07", 2],
-                    ["Integrate third-party payment gateway", "To Do", "2024-02-08", 5],
-                    ["Fix CSS issues in mobile view", "To Do", "2024-02-09", 3],
-                    ["Audit API performance for slow endpoints", "To Do", "2024-02-10", 4],
-
-                    // IN-PROGRESS
-                    ["Refactor authentication service", "In Progress", "2024-01-30", 2],
-                    ["Add user role management", "In Progress", "2024-01-28", 1],
-                    ["Optimize product search functionality", "In Progress", "2024-01-27", 5],
-                    ["Integrate email notification service", "In Progress", "2024-01-26", 3],
-                    ["Implement infinite scroll for product list", "In Progress", "2024-01-25", 4],
-                    ["Add pagination to user management page", "In Progress", "2024-01-24", 2],
-                    ["Refactor user profile API to support file uploads", "In Progress", "2024-01-23", 1],
-                    ["Update product page to show dynamic pricing", "In Progress", "2024-01-22", 5],
-
-                    // REVIEW
-                    ["Code review for new authentication service", "Review", "2024-01-15", 3],
-                    ["Test new product filtering feature", "Review", "2024-01-14", 2],
-                    ["Validate user role management security", "Review", "2024-01-13", 4],
-
-                    // DONE
-                    ["Fix security vulnerabilities in the API", "Done", "2024-01-10", 5],
-                    ["Completed basic design for dashboard layout", "Done", "2024-01-09", 1],
-                    ["Setup CI/CD pipeline for automatic deployment", "Done", "2024-01-08", 2],
-                    ["Write API documentation for public endpoints", "Done", "2024-01-07", 3],
-                    ["Launch beta version of user onboarding flow", "Done", "2024-01-06", 4],
-                    ["Implement password reset functionality", "Done", "2024-01-05", 2],
-                    ["Integrate social login for users (Google, Facebook)", "Done", "2024-01-04", 5],
-                    ["Optimize product image upload for faster speed", "Done", "2024-01-03", 1],
-                    ["Fix bug where user is redirected after submitting the form", "Done", "2024-01-02", 4],
-                    ["Upgrade dependencies to latest versions", "Done", "2024-01-01", 3],
-                    ["Fix email template rendering issue", "Done", "2023-12-31", 5],
-                    ["Refactor legacy code for better maintainability", "Done", "2023-12-30", 2],
-                ];
-
-                foreach ($tasks as $task) {
-                    $demoTasks[] = [
-                        'Task_Number'    => $taskNumber++,
-                        'Task_Title'     => $task[0],
-                        'Task_Status'    => $task[1],
-                        'Task_CreatedAt' => $task[2],
-                        'Assigned_User_ID' => $task[3],
+                // Create a project under the team
+                $project = Project::create([
+                    'Team_ID'                 => $team->Team_ID, // Link to the team
+                    'Project_Name'            => 'Sample Project', // Set the project name
+                    'Project_Description'     => 'This project is for managing time and tasks.', // Set project description
+                    'Project_Status'          => 'Active', // Project status (e.g., active)
+                    'Project_Start_Date'      => now(), // Set project start date
+                    'Project_End_Date'        => now()->addMonths(3), // Set project end date (3 months from now)
+    
+                    'Project_CreatedAt'       => now(),
+                    'Project_UpdatedAt'       => now(),
+                    'Project_DeletedAt'       => null, // Optional
+                ]);
+    
+                if ($project->Project_ID) {
+                    $demoTasks = [];
+                    $taskNumber = 1;
+                    
+                    $tasks = [
+                        // TODO
+                        ["Fix broken login page UI", "To Do", "2024-02-01", 3],
+                        ["Implement user profile page", "To Do", "2024-02-02", 1],
+                        ["Set up database schema for product inventory", "To Do", "2024-02-03", 5],
+                        ["Create API endpoints for user registration", "To Do", "2024-02-04", 2],
+                        ["Write unit tests for the order service", "To Do", "2024-02-05", 4],
+                        ["Design homepage layout", "To Do", "2024-02-06", 1],
+                        ["Update the README file with latest setup instructions", "To Do", "2024-02-07", 2],
+                        ["Integrate third-party payment gateway", "To Do", "2024-02-08", 5],
+                        ["Fix CSS issues in mobile view", "To Do", "2024-02-09", 3],
+                        ["Audit API performance for slow endpoints", "To Do", "2024-02-10", 4],
+    
+                        // IN-PROGRESS
+                        ["Refactor authentication service", "In Progress", "2024-01-30", 2],
+                        ["Add user role management", "In Progress", "2024-01-28", 1],
+                        ["Optimize product search functionality", "In Progress", "2024-01-27", 5],
+                        ["Integrate email notification service", "In Progress", "2024-01-26", 3],
+                        ["Implement infinite scroll for product list", "In Progress", "2024-01-25", 4],
+                        ["Add pagination to user management page", "In Progress", "2024-01-24", 2],
+                        ["Refactor user profile API to support file uploads", "In Progress", "2024-01-23", 1],
+                        ["Update product page to show dynamic pricing", "In Progress", "2024-01-22", 5],
+    
+                        // Waiting for Review
+                        ["Code review for new authentication service", "Waiting for Review", "2024-01-15", 3],
+                        ["Test new product filtering feature", "Waiting for Review", "2024-01-14", 2],
+                        ["Validate user role management security", "Waiting for Review", "2024-01-13", 4],
+    
+                        // DONE
+                        ["Fix security vulnerabilities in the API", "Done", "2024-01-10", 5],
+                        ["Completed basic design for dashboard layout", "Done", "2024-01-09", 1],
+                        ["Setup CI/CD pipeline for automatic deployment", "Done", "2024-01-08", 2],
+                        ["Write API documentation for public endpoints", "Done", "2024-01-07", 3],
+                        ["Launch beta version of user onboarding flow", "Done", "2024-01-06", 4],
+                        ["Implement password reset functionality", "Done", "2024-01-05", 2],
+                        ["Integrate social login for users (Google, Facebook)", "Done", "2024-01-04", 5],
+                        ["Optimize product image upload for faster speed", "Done", "2024-01-03", 1],
+                        ["Fix bug where user is redirected after submitting the form", "Done", "2024-01-02", 4],
+                        ["Upgrade dependencies to latest versions", "Done", "2024-01-01", 3],
+                        ["Fix email template rendering issue", "Done", "2023-12-31", 5],
+                        ["Refactor legacy code for better maintainability", "Done", "2023-12-30", 2],
                     ];
-                }
-
-                foreach ($demoTasks as $taskData) {
-                    Task::create([
-                        'Project_ID'             => $project->Project_ID,  // Associate the task with the specific project
-                        'Task_Number'            => $taskData['Task_Number'],
-                        'Task_Title'             => $taskData['Task_Title'],
-                        'Task_Status'            => $taskData['Task_Status'],
-                        'Task_CreatedAt'         => $taskData['Task_CreatedAt'],
-                        'Assigned_User_ID'       => $taskData['Assigned_User_ID'],
-                    ]);
+    
+                    foreach ($tasks as $task) {
+                        $demoTasks[] = [
+                            'Task_Number'    => $taskNumber++,
+                            'Task_Title'     => $task[0],
+                            'Task_Status'    => $task[1],
+                            'Task_CreatedAt' => $task[2],
+                            'Assigned_User_ID' => $task[3],
+                        ];
+                    }
+    
+                    foreach ($demoTasks as $taskData) {
+                        Task::create([
+                            'Project_ID'             => $project->Project_ID,  // Associate the task with the specific project
+                            'Task_Number'            => $taskData['Task_Number'],
+                            'Task_Title'             => $taskData['Task_Title'],
+                            'Task_Status'            => $taskData['Task_Status'],
+                            'Task_CreatedAt'         => $taskData['Task_CreatedAt'],
+                            'Assigned_User_ID'       => $taskData['Assigned_User_ID'],
+                        ]);
+                    }
                 }
             }
         }
