@@ -5,7 +5,9 @@ use App\Http\Controllers\UserController;
 
 use App\Http\Controllers\OrganisationController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\TaskCommentController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TaskMediaFileController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamUserSeatController;
 use Illuminate\Support\Facades\Route;
@@ -98,6 +100,33 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     Route::apiResource('tasks', TaskController::class);
     // Custom route to get tasks by project ID
     Route::get('projects/{projectId}/tasks', [TaskController::class, 'getTasksByProject']);
+
+    // TaskCommentController Routes
+    /**
+     * GET /task-comments - index
+     * POST /task-comments - store
+     * GET /task-comments/{taskComment} - show
+     * PUT /task-comments/{taskComment} - update
+     * DELETE /task-comments/{taskComment} - destroy
+     * This single line of code handles all these CRUD routes:
+     */
+    Route::apiResource('task-comments', TaskCommentController::class);
+    // Custom route to get task-comments by task ID
+    Route::get('tasks/{taskId}/comments', [TaskCommentController::class, 'getCommentsByTask']);
+    
+    // TaskMediaFileController Routes
+    /**
+     * GET /task-media-files - index
+     * POST /task-media-files - store
+     * GET /task-media-files/{taskMediaFile} - show
+     * PUT /task-media-files/{taskMediaFile} - update
+     * DELETE /task-media-files/{taskMediaFile} - destroy
+     * This single line of code handles all these CRUD routes:
+     */
+    Route::apiResource('task-media-files', TaskMediaFileController::class);
+    // Custom route to get task-media-files by task ID
+    Route::get('tasks/{taskId}/media-files', [TaskMediaFileController::class, 'getMediaFilesByTask']);
+
 });
 
 

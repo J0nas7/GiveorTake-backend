@@ -35,7 +35,7 @@ class TaskController extends Controller
      */
     public function index(): JsonResponse
     {
-        $tasks = Task::with('project')->get(); // Eager load team and user
+        $tasks = Task::with('project', 'comments', 'mediaFiles')->get(); // Eager load team and user
         return response()->json($tasks); // Return tasks as JSON
     }
 

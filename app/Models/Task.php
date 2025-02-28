@@ -45,6 +45,16 @@ class Task extends Model
         return $this->belongsTo(User::class, 'Assigned_User_ID');
     }
 
+    public function comments()
+    {
+        return $this->hasMany(TaskComment::class, 'Task_ID');
+    }
+
+    public function mediaFiles()
+    {
+        return $this->hasMany(TaskMediaFile::class, 'Task_ID');
+    }
+
     /**
      * Get the factory for the model.
      *

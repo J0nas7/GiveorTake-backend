@@ -76,7 +76,7 @@ class TeamUserSeatController extends Controller
     {
         $validated = $request->validate([
             'Team_ID' => 'required|exists:GT_Teams,Team_ID', // Ensure the team exists
-            'User_ID' => 'required|exists:Users,User_ID', // Ensure the user exists
+            'User_ID' => 'required|exists:GT_Users,User_ID', // Ensure the user exists
             'Seat_Role' => 'required|string|max:255', // Role assignment
             'Seat_Status' => 'nullable|string|max:255', // Optional status
             'Seat_Role_Description' => 'nullable|string|max:500',
@@ -115,7 +115,7 @@ class TeamUserSeatController extends Controller
     {
         $validated = $request->validate([
             'Team_ID' => 'required|exists:GT_Teams,Team_ID', // Ensure team exists
-            'User_ID' => 'required|exists:Users,User_ID', // Ensure user exists
+            'User_ID' => 'required|exists:GT_Users,User_ID', // Ensure user exists
             'Seat_Role' => 'required|string|max:255', // Role assignment
             'Seat_Status' => 'nullable|string|max:255', // Optional status
             'Seat_Role_Description' => 'nullable|string|max:500',

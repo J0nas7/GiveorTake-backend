@@ -50,7 +50,7 @@ class CreateProjectManagementTables extends Migration
             $table->date($prefix . 'End_Date')->nullable(); // End date
 
             MigrationHelper::addDateTimeFields($table, $prefix); // Add common dateTime fields
-            
+
             $table->foreign('Team_ID')->references('Team_ID')->on('GT_Teams')->onDelete('cascade');
         });
 
@@ -97,6 +97,38 @@ class CreateProjectManagementTables extends Migration
             $table->foreign('Assigned_User_ID')->references('User_ID')->on('GT_Users')->onDelete('set null');
         });
 
+        // Task Comments Table
+        Schema::create('GT_Task_Comments', function (Blueprint $table) {
+            $prefix = 'Comment_';
+
+            $table->bigIncrements($prefix . 'ID'); // Primary key
+            $table->bigInteger('Task_ID')->unsigned(); // Foreign key to tasks
+            $table->bigInteger('User_ID')->unsigned(); // Foreign key to users
+            $table->text($prefix . 'Text'); // Comment text
+
+            MigrationHelper::addDateTimeFields($table, $prefix); // Add common dateTime fields
+
+            $table->foreign('Task_ID')->references('Task_ID')->on('GT_Tasks')->onDelete('cascade');
+            $table->foreign('User_ID')->references('User_ID')->on('GT_Users')->onDelete('cascade');
+        });
+
+        // Task Media Files Table
+        Schema::create('GT_Task_Media_Files', function (Blueprint $table) {
+            $prefix = 'Media_';
+
+            $table->bigIncrements($prefix . 'ID'); // Primary key
+            $table->bigInteger('Task_ID')->unsigned(); // Foreign key to tasks
+            $table->bigInteger('Uploaded_By_User_ID')->unsigned(); // Foreign key to users
+            $table->string($prefix . 'File_Name', 255); // File name
+            $table->string($prefix . 'File_Path', 512); // Storage path
+            $table->string($prefix . 'File_Type', 100); // File type (image, video, etc.)
+
+            MigrationHelper::addDateTimeFields($table, $prefix); // Add common dateTime fields
+
+            $table->foreign('Task_ID')->references('Task_ID')->on('GT_Tasks')->onDelete('cascade');
+            $table->foreign('Uploaded_By_User_ID')->references('User_ID')->on('GT_Users')->onDelete('set null');
+        });
+
         // Activity Logs table (tracks user actions)
         Schema::create('GT_Activity_Logs', function (Blueprint $table) {
             $prefix = 'Log_';
@@ -130,12 +162,14 @@ class CreateProjectManagementTables extends Migration
 
     public function down()
     {
-        Schema::dropIfExists('GT_Notifications');
-        Schema::dropIfExists('GT_Activity_Logs');
-        Schema::dropIfExists('GT_Tasks');
-        Schema::dropIfExists('GT_Team_User_Seats');
         Schema::dropIfExists('GT_Projects');
         Schema::dropIfExists('GT_Teams');
         Schema::dropIfExists('GT_Organisations');
+        Schema::dropIfExists('GT_Team_User_Seats');
+        Schema::dropIfExists('GT_Tasks');
+        Schema::dropIfExists('GT_Task_Comments');
+        Schema::dropIfExists('GT_Task_Media_Files');
+        Schema::dropIfExists('GT_Activity_Logs');
+        Schema::dropIfExists('GT_Notifications');
     }
 }

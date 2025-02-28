@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\Team;
 use App\Models\TeamUserSeat;
+use App\Models\TaskComment;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -95,16 +96,16 @@ class MyDemoSeeder extends Seeder
                     'Project_Status'          => 'Active', // Project status (e.g., active)
                     'Project_Start_Date'      => now(), // Set project start date
                     'Project_End_Date'        => now()->addMonths(3), // Set project end date (3 months from now)
-    
+
                     'Project_CreatedAt'       => now(),
                     'Project_UpdatedAt'       => now(),
                     'Project_DeletedAt'       => null, // Optional
                 ]);
-    
+
                 if ($project->Project_ID) {
                     $demoTasks = [];
                     $taskNumber = 1;
-                    
+
                     $tasks = [
                         // TODO
                         ["Fix broken login page UI", "To Do", "2024-02-01", 3],
@@ -117,7 +118,7 @@ class MyDemoSeeder extends Seeder
                         ["Integrate third-party payment gateway", "To Do", "2024-02-08", 5],
                         ["Fix CSS issues in mobile view", "To Do", "2024-02-09", 3],
                         ["Audit API performance for slow endpoints", "To Do", "2024-02-10", 4],
-    
+
                         // IN-PROGRESS
                         ["Refactor authentication service", "In Progress", "2024-01-30", 2],
                         ["Add user role management", "In Progress", "2024-01-28", 1],
@@ -127,12 +128,12 @@ class MyDemoSeeder extends Seeder
                         ["Add pagination to user management page", "In Progress", "2024-01-24", 2],
                         ["Refactor user profile API to support file uploads", "In Progress", "2024-01-23", 1],
                         ["Update product page to show dynamic pricing", "In Progress", "2024-01-22", 5],
-    
+
                         // Waiting for Review
                         ["Code review for new authentication service", "Waiting for Review", "2024-01-15", 3],
                         ["Test new product filtering feature", "Waiting for Review", "2024-01-14", 2],
                         ["Validate user role management security", "Waiting for Review", "2024-01-13", 4],
-    
+
                         // DONE
                         ["Fix security vulnerabilities in the API", "Done", "2024-01-10", 5],
                         ["Completed basic design for dashboard layout", "Done", "2024-01-09", 1],
@@ -147,7 +148,7 @@ class MyDemoSeeder extends Seeder
                         ["Fix email template rendering issue", "Done", "2023-12-31", 5],
                         ["Refactor legacy code for better maintainability", "Done", "2023-12-30", 2],
                     ];
-    
+
                     foreach ($tasks as $task) {
                         $demoTasks[] = [
                             'Task_Number'    => $taskNumber++,
@@ -157,7 +158,7 @@ class MyDemoSeeder extends Seeder
                             'Assigned_User_ID' => $task[3],
                         ];
                     }
-    
+
                     foreach ($demoTasks as $taskData) {
                         Task::create([
                             'Project_ID'             => $project->Project_ID,  // Associate the task with the specific project
@@ -167,6 +168,22 @@ class MyDemoSeeder extends Seeder
                             'Task_CreatedAt'         => $taskData['Task_CreatedAt'],
                             'Assigned_User_ID'       => $taskData['Assigned_User_ID'],
                         ]);
+                    }
+
+                    // Fetch first 5 tasks
+                    $tasks = Task::whereIn('Task_Number', [1, 2, 3, 4, 5])->get();
+                    $users = User::all();
+
+                    foreach ($tasks as $task) {
+                        for ($i = 1; $i <= 5; $i++) {
+                            TaskComment::create([
+                                'Task_ID' => $task->Task_ID,
+                                'User_ID' => $users->random()->User_ID,
+                                'Comment_Text' => "Demo comment #$i for Task #{$task->Task_Number}",
+                                'Comment_CreatedAt' => now(),
+                                'Comment_UpdatedAt' => now(),
+                            ]);
+                        }
                     }
                 }
             }

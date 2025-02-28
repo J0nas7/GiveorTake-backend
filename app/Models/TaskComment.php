@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class TaskComment extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $table = 'GT_Task_Comments';
+    protected $primaryKey = 'Comment_ID';
+
+    protected $fillable = [
+        'Task_ID',
+        'User_ID',
+        'Comment_Text',
+    ];
+
+    protected $dates = ['Comment_CreatedAt', 'Comment_UpdatedAt', 'Comment_DeletedAt'];
+    const CREATED_AT = 'Comment_CreatedAt';
+    const UPDATED_AT = 'Comment_UpdatedAt';
+    const DELETED_AT = 'Comment_DeletedAt';
+
+    public function task()
+    {
+        return $this->belongsTo(Task::class, 'Task_ID');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'User_ID');
+    }
+}
+?>
