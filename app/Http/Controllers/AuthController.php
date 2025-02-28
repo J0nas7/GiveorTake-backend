@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\TeamUserSeat;
 use App\Services\AuthService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -78,10 +79,16 @@ class AuthController extends Controller
             return response()->json(['error' => 'Not authenticated'], 401);
         }
 
+        // Get all the teams where the user is assigned a seat
+        $seats = TeamUserSeat::where('User_ID', $user->User_ID)
+            ->with(['team.organisation', 'team.projects']) // Eager load the related Team, Organisation and Projects model
+            ->get();
+
         return response()->json([
             "success" => true,
             "message" => "Is logged in",
-            "data" => $user
+            "userData" => $user,
+            "userSeats" => $seats
         ], 200);
     }
 }

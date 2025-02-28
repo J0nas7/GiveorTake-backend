@@ -70,6 +70,8 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     Route::get('team-user-seats/find/{team_id}/{user_id}', [TeamUserSeatController::class, 'findByTeamAndUser']);
     // Custom route to find all teams by user ID
     Route::get('team-user-seats/teams-by-user/{user_id}', [TeamUserSeatController::class, 'findTeamsByUserID']);
+    // Custom route to get all user seats by team ID
+    Route::get('teams/{teamId}/team-user-seats', [TeamUserSeatController::class, 'getTeamUserSeatsByTeamId']);
 
     
     
@@ -112,7 +114,7 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
      */
     Route::apiResource('task-comments', TaskCommentController::class);
     // Custom route to get task-comments by task ID
-    Route::get('tasks/{taskId}/comments', [TaskCommentController::class, 'getCommentsByTask']);
+    Route::get('tasks/{taskId}/task-comments', [TaskCommentController::class, 'getCommentsByTask']);
     
     // TaskMediaFileController Routes
     /**
@@ -125,7 +127,7 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
      */
     Route::apiResource('task-media-files', TaskMediaFileController::class);
     // Custom route to get task-media-files by task ID
-    Route::get('tasks/{taskId}/media-files', [TaskMediaFileController::class, 'getMediaFilesByTask']);
+    Route::get('tasks/{taskId}/task-media-files', [TaskMediaFileController::class, 'getMediaFilesByTask']);
 
 });
 

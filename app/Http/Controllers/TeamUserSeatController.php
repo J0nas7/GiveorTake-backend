@@ -30,7 +30,7 @@ class TeamUserSeatController extends Controller
         // Return the seat as JSON if found
         return response()->json($seat);
     }
-    
+
     /**
      * Find all teams assigned to a specific user based on the User ID.
      *
@@ -41,7 +41,7 @@ class TeamUserSeatController extends Controller
     {
         // Get all the teams where the user is assigned a seat
         $seats = TeamUserSeat::where('User_ID', $user_id)
-            ->with('team') // Eager load the related Team model (ensure Team model is defined)
+            ->with(['team.organisation', 'team.projects']) // Eager load the related Team, Organisation and Projects model
             ->get();
 
         if ($seats->isEmpty()) {
@@ -53,8 +53,30 @@ class TeamUserSeatController extends Controller
         return response()->json($seats);
     }
 
+    /**
+     * Get all user seats for a specific Team ID.
+     *
+     * @param int $team_id
+     * @return JsonResponse
+     */
+    public function getTeamUserSeatsByTeamId(int $team_id): JsonResponse
+    {
+        // Retrieve all user seats belonging to the specified Team ID
+        $seats = TeamUserSeat::where('Team_ID', $team_id)
+            ->with(['user']) // Eager load the User associated with each seat
+            ->get();
+
+        if ($seats->isEmpty()) {
+            // Return 404 if no user seats are found for the team
+            return response()->json(['message' => 'No user seats found for the specified team'], 404);
+        }
+
+        // Return the user seats as JSON response
+        return response()->json($seats);
+    }
+
     //// The rest of this TeamUserSeatController is RESTful API methods ////
-    
+
     /**
      * Display a listing of the resource.
      *
@@ -150,4 +172,3 @@ class TeamUserSeatController extends Controller
         return response()->json(['message' => 'Seat deleted successfully.']); // Return success message
     }
 }
-?>
