@@ -117,7 +117,7 @@ class TeamUserSeatController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $seat = TeamUserSeat::find($id);
+        $seat = TeamUserSeat::with('team.organisation', 'user')->find($id); // Eager load team and user
 
         if (!$seat) {
             return response()->json(['message' => 'Seat not found'], 404); // Return 404 if not found

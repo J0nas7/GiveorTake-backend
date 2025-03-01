@@ -10,6 +10,27 @@ use Illuminate\Http\JsonResponse;
 class OrganisationController extends Controller
 {
     /**
+     * Display a listing of organisations based on User ID.
+     *
+     * @param int $userId
+     * @return JsonResponse
+     */
+    public function getOrganisationsByUser(int $userId): JsonResponse
+    {
+        $organisation = Organisation::with('teams.projects') // Eager load teams and projects
+            ->where('User_ID', $userId)
+            ->first();
+
+        if (!$organisation) {
+            return response()->json(['message' => 'No organisations found for this user'], 404);
+        }
+
+        return response()->json($organisation);
+    }
+
+    //// The rest of this OrganisationController is RESTful API methods ////
+    
+    /**
      * Display a listing of the resource.
      *
      * @return JsonResponse
@@ -46,7 +67,7 @@ class OrganisationController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $organisation = Organisation::find($id);
+        $organisation = Organisation::with('teams.userSeat')->find($id); // Eager load teams and userSeat
 
         if (!$organisation) {
             return response()->json(['message' => 'Organisation not found'], 404); // Return 404 if not found

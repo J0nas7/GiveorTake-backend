@@ -79,8 +79,8 @@ class TaskController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $task = Task::find($id);
-
+        $task = Task::with('project', 'comments', 'mediaFiles')->find($id); // Eager load team and user
+        
         if (!$task) {
             return response()->json(['message' => 'Task not found'], 404); // Return 404 if not found
         }

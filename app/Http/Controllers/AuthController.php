@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Organisation;
 use App\Models\TeamUserSeat;
 use App\Services\AuthService;
 use Illuminate\Http\Request;
@@ -84,11 +85,16 @@ class AuthController extends Controller
             ->with(['team.organisation', 'team.projects']) // Eager load the related Team, Organisation and Projects model
             ->get();
 
+        $organisation = Organisation::with('teams.projects') // Eager load teams and projects
+            ->where('User_ID', $user->User_ID)
+            ->first();
+
         return response()->json([
             "success" => true,
             "message" => "Is logged in",
             "userData" => $user,
-            "userSeats" => $seats
+            "userSeats" => $seats,
+            "userOrganisation" => $organisation
         ], 200);
     }
 }

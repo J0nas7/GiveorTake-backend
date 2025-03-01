@@ -38,6 +38,8 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
      * This single line of code handles all these CRUD routes:
      */
     Route::apiResource('organisations', OrganisationController::class);
+    // Custom route to get organisations by user ID
+    Route::get('users/{userId}/organisations', [OrganisationController::class, 'getOrganisationsByUser']);
 
 
 

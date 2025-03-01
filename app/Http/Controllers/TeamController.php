@@ -65,7 +65,7 @@ class TeamController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $team = Team::find($id);
+        $team = Team::with('organisation', 'projects')->find($id); // Eager load organisation and projects
 
         if (!$team) {
             return response()->json(['message' => 'Team not found'], 404); // Return 404 if not found

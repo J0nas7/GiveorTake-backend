@@ -79,7 +79,7 @@ class ProjectController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $project = Project::find($id);
+        $project = Project::with('team.organisation', 'tasks')->find($id); // Eager load team and user
 
         if (!$project) {
             return response()->json(['message' => 'Project not found'], 404); // Return 404 if not found
