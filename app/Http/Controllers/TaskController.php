@@ -17,7 +17,9 @@ class TaskController extends Controller
      */
     public function getTasksByProject(int $projectId): JsonResponse
     {
-        $tasks = Task::where('Project_ID', $projectId)->get();
+        $tasks = Task::with('project', 'comments', 'mediaFiles') // Eager load project, comments and mediaFiles
+            ->where('Project_ID', $projectId) // Filter by Project_ID
+            ->get();
 
         if ($tasks->isEmpty()) {
             return response()->json(['message' => 'No tasks found for this project'], 404);
@@ -35,7 +37,7 @@ class TaskController extends Controller
      */
     public function index(): JsonResponse
     {
-        $tasks = Task::with('project', 'comments', 'mediaFiles')->get(); // Eager load team and user
+        $tasks = Task::with('project', 'comments', 'mediaFiles')->get(); // Eager load project, comments and mediaFiles
         return response()->json($tasks); // Return tasks as JSON
     }
 
@@ -80,7 +82,7 @@ class TaskController extends Controller
     public function show(int $id): JsonResponse
     {
         $task = Task::with('project', 'comments', 'mediaFiles')->find($id); // Eager load team and user
-        
+
         if (!$task) {
             return response()->json(['message' => 'Task not found'], 404); // Return 404 if not found
         }
