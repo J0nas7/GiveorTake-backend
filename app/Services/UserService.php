@@ -41,6 +41,17 @@ trait UserService
     }
 
     /**
+     * Find a user by their email address.
+     *
+     * @param string $email
+     * @return User|null
+     */
+    public function findUserByEmail(string $email)
+    {
+        return User::where('User_Email', $email)->first();
+    }
+
+    /**
      * Validate and create a new user.
      *
      * @param array $data

@@ -25,6 +25,8 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
      * This single line of code handles all these CRUD routes:
      */
     Route::apiResource('users', UserController::class);
+    // Custom route to get user by user email
+    Route::post('users/userByEmail', [UserController::class, 'getUserByEmail']);
 
 
     

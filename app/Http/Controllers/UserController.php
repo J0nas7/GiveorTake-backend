@@ -10,6 +10,29 @@ class UserController extends Controller
     use UserService;
 
     /**
+     * Get user by email.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getUserByEmail(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+
+        $user = $this->findUserByEmail($request->input('email'));
+        
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+        
+        return response()->json($user, 200);
+    }
+
+    //// The rest of this UserController is RESTful API methods ////
+
+    /**
      * Get all users.
      *
      * @return \Illuminate\Http\JsonResponse
