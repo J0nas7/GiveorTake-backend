@@ -97,6 +97,26 @@ class CreateProjectManagementTables extends Migration
             $table->foreign('Assigned_User_ID')->references('User_ID')->on('GT_Users')->onDelete('set null');
         });
 
+        // Task Time Trackings Table
+        Schema::create('GT_Task_Time_Trackings', function (Blueprint $table) {
+            $prefix = 'Time_Tracking_';
+        
+            $table->bigIncrements($prefix . 'ID'); // Primary key
+            $table->bigInteger('Task_ID')->unsigned(); // Foreign key to tasks
+            $table->bigInteger('User_ID')->unsigned(); // Foreign key to users
+            $table->bigInteger('Comment_ID')->unsigned()->nullable(); // Foreign key to task comments
+            $table->dateTime($prefix . 'Start_Time'); // Start time of the tracking session
+            $table->dateTime($prefix . 'End_Time')->nullable(); // End time of the tracking session (nullable if in progress)
+            $table->integer($prefix . 'Duration')->unsigned()->nullable(); // Duration in minutes (optional, can be computed)
+            $table->text($prefix . 'Notes')->nullable(); // Optional notes on the time entry
+        
+            MigrationHelper::addDateTimeFields($table, $prefix); // Add common dateTime fields
+        
+            $table->foreign('Task_ID')->references('Task_ID')->on('GT_Tasks')->onDelete('cascade');
+            $table->foreign('User_ID')->references('User_ID')->on('GT_Users')->onDelete('cascade');
+            $table->foreign('Comment_ID')->references('Comment_ID')->on('GT_Task_Comments')->onDelete('set null');
+        });
+
         // Task Comments Table
         Schema::create('GT_Task_Comments', function (Blueprint $table) {
             $prefix = 'Comment_';
@@ -104,12 +124,14 @@ class CreateProjectManagementTables extends Migration
             $table->bigIncrements($prefix . 'ID'); // Primary key
             $table->bigInteger('Task_ID')->unsigned(); // Foreign key to tasks
             $table->bigInteger('User_ID')->unsigned(); // Foreign key to users
+            $table->bigInteger('Time_Tracking_ID')->unsigned()->nullable(); // Foreign key to task time tracking
             $table->text($prefix . 'Text'); // Comment text
 
             MigrationHelper::addDateTimeFields($table, $prefix); // Add common dateTime fields
 
             $table->foreign('Task_ID')->references('Task_ID')->on('GT_Tasks')->onDelete('cascade');
             $table->foreign('User_ID')->references('User_ID')->on('GT_Users')->onDelete('cascade');
+            $table->foreign('Time_Tracking_ID')->references('Time_Tracking_ID')->on('GT_Task_Time_Trackings')->onDelete('set null');
         });
 
         // Task Media Files Table

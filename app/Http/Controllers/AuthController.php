@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Organisation;
+use App\Models\TaskTimeTrack;
 use App\Models\TeamUserSeat;
 use App\Services\AuthService;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ class AuthController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login','register']]);
+        $this->middleware('auth:api', ['except' => ['login', 'register']]);
     }
 
     /**
@@ -89,12 +90,18 @@ class AuthController extends Controller
             ->where('User_ID', $user->User_ID)
             ->first();
 
+        $activeTimeTrack = TaskTimeTrack::with('task')
+            ->where('User_ID', $user->User_ID)
+            ->whereNull('Time_Tracking_End_Time') // This checks for an active timer (no end time)
+            ->first();
+
         return response()->json([
             "success" => true,
             "message" => "Is logged in",
             "userData" => $user,
             "userSeats" => $seats,
-            "userOrganisation" => $organisation
+            "userOrganisation" => $organisation,
+            "userActiveTimeTrack" => $activeTimeTrack
         ], 200);
     }
 }

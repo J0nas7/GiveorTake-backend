@@ -50,6 +50,11 @@ class Task extends Model
         return $this->hasMany(TaskComment::class, 'Task_ID');
     }
 
+    public function timeTracks()
+    {
+        return $this->hasMany(TaskTimeTrack::class, 'Task_ID');
+    }
+
     public function mediaFiles()
     {
         return $this->hasMany(TaskMediaFile::class, 'Task_ID');

@@ -8,6 +8,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskCommentController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskMediaFileController;
+use App\Http\Controllers\TaskTimeTrackController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamUserSeatController;
 use Illuminate\Support\Facades\Route;
@@ -107,6 +108,19 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     // Custom route to get tasks by project ID
     Route::get('projects/{projectId}/tasks', [TaskController::class, 'getTasksByProject']);
 
+    // TaskTimeTrackController Routes
+    /**
+     * GET /task-time-tracks - index
+     * POST /task-time-tracks - store
+     * GET /task-time-tracks/{taskTimeTrack} - show
+     * PUT /task-time-tracks/{taskTimeTrack} - update
+     * DELETE /task-time-tracks/{taskTimeTrack} - destroy
+     * This single line of code handles all these CRUD routes:
+     */
+    Route::apiResource('task-time-tracks', TaskTimeTrackController::class);
+    // Custom route to get task-time-tracks total time by task ID
+    Route::get('tasks/{taskId}/task-time-tracks', [TaskTimeTrackController::class, 'getTotalTimeByTask']);
+    
     // TaskCommentController Routes
     /**
      * GET /task-comments - index

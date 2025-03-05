@@ -16,6 +16,7 @@ class TaskComment extends Model
     protected $fillable = [
         'Task_ID',
         'User_ID',
+        'Time_Tracking_ID',
         'Comment_Text',
     ];
 
@@ -32,6 +33,11 @@ class TaskComment extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'User_ID');
+    }
+
+    public function timeTracking()
+    {
+        return $this->belongsTo(TaskTimeTrack::class, 'Time_Tracking_ID');
     }
 }
 ?>
