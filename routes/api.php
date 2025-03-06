@@ -118,8 +118,11 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
      * This single line of code handles all these CRUD routes:
      */
     Route::apiResource('task-time-tracks', TaskTimeTrackController::class);
-    // Custom route to get task-time-tracks total time by task ID
-    Route::get('tasks/{taskId}/task-time-tracks', [TaskTimeTrackController::class, 'getTotalTimeByTask']);
+    // Custom route to get task-time-tracks by task ID
+    Route::get('tasks/{taskId}/task-time-tracks', [TaskTimeTrackController::class, 'getTaskTimeTracksByTask']);
+    // Custom route to get the 10 latest unique TaskTimeTracks by Project_ID
+    Route::get('projects/{projectId}/latest-task-time-tracks', [TaskTimeTrackController::class, 'getLatestUniqueTaskTimeTracksByProject']);
+
     
     // TaskCommentController Routes
     /**

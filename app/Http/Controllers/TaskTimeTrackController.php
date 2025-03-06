@@ -10,60 +10,40 @@ use App\Http\Controllers\Controller;
 class TaskTimeTrackController extends Controller
 {
     /**
-     * Get total time spent by task ID.
-     *
-     * @param int $userId
-     * @return JsonResponse
-     */
-    public function getTotalTimeByTask(int $taskId): JsonResponse
-    {
-        $totalTime = TaskTimeTrack::where('Task_ID', $taskId)->sum('Time_Tracking_Duration');
-        return response()->json(['Task_ID' => $taskId, 'Total_Time' => $totalTime]);
-    }
-
-    /**
-     * Get total time spent by task ID and user ID.
-     *
-     * @param int $userId
-     * @return JsonResponse
-     */
-    public function getTotalTimeByUserOnTask(int $taskId, int $userId): JsonResponse
-    {
-        $totalTime = TaskTimeTrack::where('Task_ID', $taskId)->where('User_ID', $userId)->sum('Time_Tracking_Duration');
-        return response()->json(['Task_ID' => $taskId, 'User_ID' => $userId, 'Total_Time' => $totalTime]);
-    }
-
-    /**
-     * Get active timers by user ID.
-     *
-     * @param int $userId
-     * @return JsonResponse
-     */
-    public function getActiveTimersByUserId(int $userId): JsonResponse
-    {
-        $activeTimers = TaskTimeTrack::where('User_ID', $userId)->whereNull('Time_Tracking_End_Time')->get();
-        return response()->json($activeTimers);
-    }
-
-    /**
-     * Get the active time track for a specific task and user.
+     * Get all task time tracks for a specific task.
      *
      * @param int $taskId
-     * @param int $userId
      * @return JsonResponse
      */
-    public function getActiveTimeTrackForTask(int $taskId, int $userId): JsonResponse
+    public function getTaskTimeTracksByTask(int $taskId): JsonResponse
     {
-        $activeTimeTrack = TaskTimeTrack::where('Task_ID', $taskId)
-            ->where('User_ID', $userId)
-            ->whereNull('Time_Tracking_End_Time') // This checks for an active timer (no end time)
-            ->first();
+        // Fetch all TaskTimeTrack records for the given Task_ID
+        $timeTracks = TaskTimeTrack::where('Task_ID', $taskId)
+            ->with('task') // Include the related task details (optional)
+            ->get();
 
-        if (!$activeTimeTrack) {
-            return response()->json(['message' => 'No active time track found for this task and user.'], 404);
+        // Check if any time tracks were found
+        if ($timeTracks->isEmpty()) {
+            return response()->json(['message' => 'No time tracks found for this task']);
         }
 
-        return response()->json($activeTimeTrack);
+        // Return the time tracks as a JSON response
+        return response()->json($timeTracks);
+    }
+
+    public function getLatestUniqueTaskTimeTracksByProject(int $projectId): JsonResponse
+    {
+        // Get the 10 latest unique task time tracks for the given project, including task details
+        $latestTimeTracks = TaskTimeTrack::whereHas('task', function ($query) use ($projectId) {
+            $query->where('Project_ID', $projectId);
+        })
+            ->with('task') // Eager load related task data
+            ->orderBy('Time_Tracking_Start_Time', 'desc') // Order by most recent start time
+            ->get()
+            ->unique('Task_ID') // Ensure unique Task_ID
+            ->take(10); // Get the latest 10
+
+        return response()->json($latestTimeTracks);
     }
 
     //// The rest of this TaskTimeTrackController is RESTful API methods ////
@@ -89,6 +69,7 @@ class TaskTimeTrackController extends Controller
     {
         $validated = $request->validate([
             'Task_ID' => 'required|integer|exists:GT_Tasks,Task_ID',
+            'Project_ID' => 'required|integer|exists:GT_Projects,Project_ID',
             'User_ID' => 'required|integer|exists:GT_Users,User_ID',
             'Comment_ID' => 'nullable|integer|exists:GT_Task_Comments,Comment_ID',
             'Time_Tracking_Start_Time' => 'required|date',
