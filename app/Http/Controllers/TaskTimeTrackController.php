@@ -31,6 +31,28 @@ class TaskTimeTrackController extends Controller
         return response()->json($timeTracks);
     }
 
+    /**
+     * Get all task time tracks for a specific project.
+     *
+     * @param int $projectId
+     * @return JsonResponse
+     */
+    public function getTaskTimeTracksByProject(int $projectId): JsonResponse
+    {
+        // Fetch all TaskTimeTrack records for the given Project_ID
+        $timeTracks = TaskTimeTrack::where('Project_ID', $projectId)
+            ->with('task', 'user') // Include the related task details (optional)
+            ->get();
+
+        // Check if any time tracks were found
+        if ($timeTracks->isEmpty()) {
+            return response()->json(['message' => 'No time tracks found for this project']);
+        }
+
+        // Return the time tracks as a JSON response
+        return response()->json($timeTracks);
+    }
+
     public function getLatestUniqueTaskTimeTracksByProject(int $projectId): JsonResponse
     {
         // Get the 10 latest unique task time tracks for the given project, including task details
