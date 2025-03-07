@@ -9,6 +9,8 @@ use App\Models\Task;
 use App\Models\Team;
 use App\Models\TeamUserSeat;
 use App\Models\TaskComment;
+use App\Models\TaskTimeTrack;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -84,7 +86,7 @@ class MyDemoSeeder extends Seeder
             if ($team->Team_ID) {
                 $seat = TeamUserSeat::create([
                     'Team_ID'   => $team->Team_ID,
-                    'User_ID'   => $user->User_ID,
+                    'User_ID'   => 2,
                     'Seat_Role' => 'Member',  // Default role (change if needed)
                 ]);
 
@@ -182,6 +184,30 @@ class MyDemoSeeder extends Seeder
                                 'Comment_Text' => "Demo comment #$i for Task #{$task->Task_Number}",
                                 'Comment_CreatedAt' => now(),
                                 'Comment_UpdatedAt' => now(),
+                            ]);
+                        }
+                    }
+
+                    $tasks = Task::all();
+
+                    // Iterate through tasks to generate time tracking data
+                    foreach ($tasks as $task) {
+                        // Create 6 random time tracking entries for each task
+                        for ($i = 0; $i < 6; $i++) {
+                            $startTime = Carbon::now()->subDays(rand(0, 60)); // Random start time within this year
+                            $endTime = $startTime->copy()->addMinutes(rand(30, 240)); // Random end time (30 to 240 minutes after start)
+
+                            $duration = $startTime->diffInSeconds($endTime); // Calculate duration in seconds
+
+                            // Insert demo time track
+                            TaskTimeTrack::create([
+                                'Project_ID' => $project->Project_ID,
+                                'Task_ID' => $task->Task_ID,
+                                'User_ID' => $users->random()->User_ID,
+                                'Time_Tracking_Start_Time' => $startTime->toDateTimeString(),
+                                'Time_Tracking_End_Time' => $endTime->toDateTimeString(),
+                                'Time_Tracking_Duration' => $duration,
+                                'Time_Tracking_Notes' => "Demo time tracking entry for Task " . $task->Task_Number . " - Entry " . ($i + 1),
                             ]);
                         }
                     }

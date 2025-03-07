@@ -191,6 +191,7 @@ class CreateProjectManagementTables extends Migration
         Schema::dropIfExists('GT_Organisations');
         Schema::dropIfExists('GT_Team_User_Seats');
         Schema::dropIfExists('GT_Tasks');
+        // Schema::dropIfExists('GT_Task_Time_Trackings');
         Schema::dropIfExists('GT_Task_Comments');
         Schema::dropIfExists('GT_Task_Media_Files');
         Schema::dropIfExists('GT_Activity_Logs');
