@@ -17,7 +17,7 @@ class TaskController extends Controller
      */
     public function getTasksByProject(int $projectId): JsonResponse
     {
-        $tasks = Task::with('project', 'timeTracks', 'comments', 'mediaFiles') // Eager load project, comments and mediaFiles
+        $tasks = Task::with('project.team.userSeat.user', 'timeTracks', 'comments', 'mediaFiles') // Eager load project, comments and mediaFiles
             ->where('Project_ID', $projectId) // Filter by Project_ID
             ->get();
 
