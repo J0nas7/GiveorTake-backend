@@ -17,9 +17,9 @@ class OrganisationController extends Controller
      */
     public function getOrganisationsByUser(int $userId): JsonResponse
     {
-        $organisation = Organisation::with('teams.projects') // Eager load teams and projects
+        $organisation = Organisation::with(['teams.projects', 'teams.userSeats']) // Eager load teams, projects and userSeats
             ->where('User_ID', $userId)
-            ->first();
+            ->get();
 
         if (!$organisation) {
             return response()->json(['message' => 'No organisations found for this user'], 404);

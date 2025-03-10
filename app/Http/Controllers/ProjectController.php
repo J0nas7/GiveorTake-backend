@@ -59,7 +59,7 @@ class ProjectController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'Organisation_ID' => 'required|integer|exists:GT_Organisations,Organisation_ID', // Ensure the organisation exists
+            'Team_ID' => 'required|integer|exists:GT_Teams,Team_ID', // Ensure the team exists
             'Project_Name' => 'required|string|max:255',
             'Project_Description' => 'nullable|string',
             'Project_Status' => 'required|string',

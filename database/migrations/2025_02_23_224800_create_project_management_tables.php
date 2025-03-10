@@ -81,7 +81,7 @@ class CreateProjectManagementTables extends Migration
             $prefix = 'Task_';
 
             $table->bigIncrements($prefix . 'ID'); // Primary key
-            $table->bigInteger($prefix . 'Number')->unsigned(); // Project-related key to count number of tasks
+            $table->bigInteger($prefix . 'Number')->unsigned()->nullable(); // Project-related key to count number of tasks
             $table->bigInteger('Project_ID')->unsigned(); // Foreign key to Projects
             $table->bigInteger('Team_ID')->unsigned()->nullable(); // Optional: Assign to a team
             $table->bigInteger('Assigned_User_ID')->unsigned()->nullable(); // Optional: Assign to a user
