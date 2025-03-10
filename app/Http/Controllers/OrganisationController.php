@@ -37,7 +37,7 @@ class OrganisationController extends Controller
      */
     public function index(): JsonResponse
     {
-        $organisations = Organisation::with('teams.userSeat')->get(); // Eager load teams and userSeat
+        $organisations = Organisation::with('teams.userSeats')->get(); // Eager load teams and userSeat
         return response()->json($organisations); // Return organisations as JSON
     }
 
@@ -67,7 +67,7 @@ class OrganisationController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $organisation = Organisation::with('teams.userSeat')->find($id); // Eager load teams and userSeat
+        $organisation = Organisation::with('teams.userSeats')->find($id); // Eager load teams and userSeat
 
         if (!$organisation) {
             return response()->json(['message' => 'Organisation not found'], 404); // Return 404 if not found
