@@ -44,6 +44,7 @@ class CreateProjectManagementTables extends Migration
             $table->bigIncrements($prefix . 'ID'); // Primary key
             $table->bigInteger('Team_ID')->unsigned(); // Foreign key to Organisations
             $table->string($prefix . 'Name', 255); // Project name
+            $table->string($prefix . 'Key', 5); // Project key
             $table->text($prefix . 'Description')->nullable(); // Project description
             $table->enum($prefix . 'Status', ['Planned', 'Active', 'Completed', 'On Hold'])->default('Planned'); // Status
             $table->date($prefix . 'Start_Date')->nullable(); // Start date
@@ -81,7 +82,7 @@ class CreateProjectManagementTables extends Migration
             $prefix = 'Task_';
 
             $table->bigIncrements($prefix . 'ID'); // Primary key
-            $table->bigInteger($prefix . 'Number')->unsigned()->nullable(); // Project-related key to count number of tasks
+            $table->bigInteger($prefix . 'Key')->unsigned(); // Project-related key to count number of tasks
             $table->bigInteger('Project_ID')->unsigned(); // Foreign key to Projects
             $table->bigInteger('Team_ID')->unsigned()->nullable(); // Optional: Assign to a team
             $table->bigInteger('Assigned_User_ID')->unsigned()->nullable(); // Optional: Assign to a user

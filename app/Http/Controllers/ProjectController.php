@@ -61,6 +61,7 @@ class ProjectController extends Controller
         $validated = $request->validate([
             'Team_ID' => 'required|integer|exists:GT_Teams,Team_ID', // Ensure the team exists
             'Project_Name' => 'required|string|max:255',
+            'Project_Key' => 'required|string|max:5',
             'Project_Description' => 'nullable|string',
             'Project_Status' => 'required|string',
             'Project_Start_Date' => 'required|date',
@@ -79,7 +80,11 @@ class ProjectController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $project = Project::with('team.organisation', 'tasks')->find($id); // Eager load team and user
+        $project = Project::with([
+            'team.organisation',  // Load the organisation related to the team
+            'team.userSeats.user',    // Load the user seats within the team
+            'tasks'               // Load tasks under the project
+        ])->find($id);
 
         if (!$project) {
             return response()->json(['message' => 'Project not found'], 404); // Return 404 if not found
@@ -111,6 +116,7 @@ class ProjectController extends Controller
     {
         $validated = $request->validate([
             'Project_Name' => 'required|string|max:255',
+            'Project_Key' => 'required|string|max:5',
             'Project_Description' => 'nullable|string',
             'Project_Status' => 'required|string',
             'Project_Start_Date' => 'required|date',

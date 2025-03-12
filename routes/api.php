@@ -11,6 +11,7 @@ use App\Http\Controllers\TaskMediaFileController;
 use App\Http\Controllers\TaskTimeTrackController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamUserSeatController;
+use App\Http\Controllers\UtilityController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\UserOnly;
 
@@ -107,6 +108,10 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     Route::apiResource('tasks', TaskController::class);
     // Custom route to get tasks by project ID
     Route::get('projects/{projectId}/tasks', [TaskController::class, 'getTasksByProject']);
+    // Custom route to bulk-delete tasks by array of IDs
+    Route::post('/tasks/bulk-destroy', [TaskController::class, 'bulkDestroy']);
+    // Custom route to bulk-update tasks by array of data
+    Route::post('/tasks/bulk-update', [TaskController::class, 'bulkUpdate']);
 
     // TaskTimeTrackController Routes
     /**
@@ -151,7 +156,10 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     Route::apiResource('task-media-files', TaskMediaFileController::class);
     // Custom route to get task-media-files by task ID
     Route::get('tasks/{taskId}/task-media-files', [TaskMediaFileController::class, 'getMediaFilesByTask']);
-
+    
+    // UtilityController Routes
+    // Custom route to get global search results
+    Route::get('search/{userId}/{searchString}', [UtilityController::class, 'globalSearch']);
 });
 
 

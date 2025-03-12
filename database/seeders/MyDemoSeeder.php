@@ -94,6 +94,7 @@ class MyDemoSeeder extends Seeder
                 $project = Project::create([
                     'Team_ID'                 => $team->Team_ID, // Link to the team
                     'Project_Name'            => 'Sample Project', // Set the project name
+                    'Project_Key'             => 'GOT', // Set the project key
                     'Project_Description'     => 'This project is for managing time and tasks.', // Set project description
                     'Project_Status'          => 'Active', // Project status (e.g., active)
                     'Project_Start_Date'      => now(), // Set project start date
@@ -153,7 +154,7 @@ class MyDemoSeeder extends Seeder
 
                     foreach ($tasks as $task) {
                         $demoTasks[] = [
-                            'Task_Number'    => $taskNumber++,
+                            'Task_Key'       => $taskNumber++,
                             'Task_Title'     => $task[0],
                             'Task_Status'    => $task[1],
                             'Task_CreatedAt' => $task[2],
@@ -164,7 +165,7 @@ class MyDemoSeeder extends Seeder
                     foreach ($demoTasks as $taskData) {
                         Task::create([
                             'Project_ID'             => $project->Project_ID,  // Associate the task with the specific project
-                            'Task_Number'            => $taskData['Task_Number'],
+                            'Task_Key'               => $taskData['Task_Key'],
                             'Task_Title'             => $taskData['Task_Title'],
                             'Task_Status'            => $taskData['Task_Status'],
                             'Task_CreatedAt'         => $taskData['Task_CreatedAt'],
@@ -173,7 +174,7 @@ class MyDemoSeeder extends Seeder
                     }
 
                     // Fetch first 5 tasks
-                    $tasks = Task::whereIn('Task_Number', [1, 2, 3, 4, 5])->get();
+                    $tasks = Task::whereIn('Task_ID', [1, 2, 3, 4, 5])->get();
                     $users = User::all();
 
                     foreach ($tasks as $task) {
@@ -181,7 +182,7 @@ class MyDemoSeeder extends Seeder
                             TaskComment::create([
                                 'Task_ID' => $task->Task_ID,
                                 'User_ID' => $users->random()->User_ID,
-                                'Comment_Text' => "Demo comment #$i for Task #{$task->Task_Number}",
+                                'Comment_Text' => "Demo comment #$i for Task #{$task->Task_Key}",
                                 'Comment_CreatedAt' => now(),
                                 'Comment_UpdatedAt' => now(),
                             ]);
@@ -207,7 +208,7 @@ class MyDemoSeeder extends Seeder
                                 'Time_Tracking_Start_Time' => $startTime->toDateTimeString(),
                                 'Time_Tracking_End_Time' => $endTime->toDateTimeString(),
                                 'Time_Tracking_Duration' => $duration,
-                                'Time_Tracking_Notes' => "Demo time tracking entry for Task " . $task->Task_Number . " - Entry " . ($i + 1),
+                                'Time_Tracking_Notes' => "Demo time tracking entry for Task " . $task->Task_Key . " - Entry " . ($i + 1),
                             ]);
                         }
                     }
