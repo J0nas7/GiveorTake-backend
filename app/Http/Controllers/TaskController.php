@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Project;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
@@ -80,6 +82,56 @@ class TaskController extends Controller
         $task = Task::create(array_merge($validated, ['Task_Key' => $taskKey]));
 
         return response()->json($task, 201); // Return created task as JSON with HTTP status 201
+    }
+
+    /**
+     * Get specific task by project key and task key
+     * 
+     * @param string projectKey
+     * @param int taskKey
+     * @return JsonResponse
+     */
+    public function getTaskByKeys(string $projectKey, int $taskKey): JsonResponse
+    {
+        $user = Auth::guard('api')->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Not authenticated'], 401);
+        }
+
+        $userId = $user->User_ID;
+
+        // Find the project with the matching key
+        $project = Project::where('Project_Key', $projectKey)
+            ->whereHas('team', function ($query) use ($userId) {
+                $query->whereHas('organisation', function ($subQuery) use ($userId) {
+                    $subQuery->where('User_ID', $userId); // User is the owner of the organisation
+                })->orWhereHas('userSeats', function ($subQuery) use ($userId) {
+                    $subQuery->where('User_ID', $userId); // User has a seat in the team
+                });
+            })
+            ->first();
+
+        if (!$project) {
+            return response()->json(['message' => 'Project not found'], 404); // Return 404 if not found
+        }
+
+        // Find the matching task within the project
+        $task = Task::with([
+            'project.team.userSeats.user',
+            'timeTracks',
+            'comments',
+            'mediaFiles'
+        ])
+            ->where('Task_Key', $taskKey)
+            ->where('Project_ID', $project->Project_ID) // Ensure task belongs to the project
+            ->first();
+
+        if (!$task) {
+            return response()->json(['message' => 'Task not found'], 404); // Return 404 if not found
+        }
+
+        return response()->json($task); // Return the task as JSON
     }
 
     /**

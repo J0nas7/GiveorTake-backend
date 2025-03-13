@@ -87,8 +87,11 @@ class AuthController extends Controller
             ->get();
 
         $organisation = Organisation::with('teams.projects') // Eager load teams and projects
-            ->where('User_ID', $user->User_ID)
-            ->first();
+            ->where('User_ID', $user->User_ID)  // Check if the user is the owner of the organisation
+            ->orWhereHas('teams.userSeats', function($query) use ($user) {
+                $query->where('User_ID', $user->User_ID);  // Check if the user has a seat in any team within the organisation
+            })
+            ->first();  // Get the first organisation that matches either condition
 
         $activeTimeTrack = TaskTimeTrack::with('task')
             ->where('User_ID', $user->User_ID)

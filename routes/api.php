@@ -112,6 +112,8 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     Route::post('/tasks/bulk-destroy', [TaskController::class, 'bulkDestroy']);
     // Custom route to bulk-update tasks by array of data
     Route::post('/tasks/bulk-update', [TaskController::class, 'bulkUpdate']);
+    // Custom route to get task by keys
+    Route::get('taskByKeys/{projectKey}/{taskKey}', [TaskController::class, 'getTaskByKeys']);
 
     // TaskTimeTrackController Routes
     /**

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Project;
+use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
@@ -25,10 +27,38 @@ class UtilityController extends Controller
             return response()->json(['error' => 'User ID is required.'], 400);
         }
 
+        $results = [];
+
+        // Check if $searchString matches the pattern (3-5 letters, hyphen, number)
+        if (preg_match('/^([A-Za-z]{3,5})-(\d+)$/', $searchString, $matches)) {
+            $key = $matches[1]; // Extract project key
+            $number = $matches[2]; // Extract task number
+
+            // Find the project with the matching key
+            $project = Project::where('Project_Key', $key)
+                ->whereHas('team', function ($query) use ($userId) {
+                    $query->whereHas('organisation', function ($subQuery) use ($userId) {
+                        $subQuery->where('User_ID', $userId); // User is the owner of the organisation
+                    })->orWhereHas('userSeats', function ($subQuery) use ($userId) {
+                        $subQuery->where('User_ID', $userId); // User has a seat in the team
+                    });
+                })
+                ->first();
+
+            if ($project) {
+                // Find matching tasks within the project
+                $tasks = Task::where('Task_Key', $number)
+                    ->where('Project_ID', $project->Project_ID) // Ensure task belongs to the project
+                    ->get();
+
+                if (!$tasks->isEmpty()) {
+                    $results['GT_Tasks'] = $tasks;
+                }
+            }
+        }
+
         // Get all table names in SQLite
         $tables = DB::select("SELECT name FROM sqlite_master WHERE type='table'");
-
-        $results = [];
 
         foreach ($tables as $table) {
             $tableName = $table->name;

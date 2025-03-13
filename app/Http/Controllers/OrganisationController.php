@@ -17,19 +17,23 @@ class OrganisationController extends Controller
      */
     public function getOrganisationsByUser(int $userId): JsonResponse
     {
-        $organisation = Organisation::with(['teams.projects', 'teams.userSeats']) // Eager load teams, projects and userSeats
-            ->where('User_ID', $userId)
+        // Get organisations where the user is the owner or the user is a member of a team within the organisation
+        $organisations = Organisation::with(['teams.projects', 'teams.userSeats'])
+            ->where('User_ID', $userId)  // Check if the user is the owner of the organisation
+            ->orWhereHas('teams.userSeats', function ($query) use ($userId) {
+                $query->where('User_ID', $userId);  // Check if the user has a seat in any team within the organisation
+            })
             ->get();
 
-        if (!$organisation) {
+        if ($organisations->isEmpty()) {
             return response()->json(['message' => 'No organisations found for this user'], 404);
         }
 
-        return response()->json($organisation);
+        return response()->json($organisations);
     }
 
     //// The rest of this OrganisationController is RESTful API methods ////
-    
+
     /**
      * Display a listing of the resource.
      *
