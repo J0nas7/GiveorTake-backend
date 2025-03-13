@@ -47,7 +47,8 @@ class UtilityController extends Controller
 
             if ($project) {
                 // Find matching tasks within the project
-                $tasks = Task::where('Task_Key', $number)
+                $tasks = Task::with('project')
+                    ->where('Task_Key', $number)
                     ->where('Project_ID', $project->Project_ID) // Ensure task belongs to the project
                     ->get();
 
@@ -71,9 +72,16 @@ class UtilityController extends Controller
                 return $column->name === 'User_ID';
             });
 
-            // Start building the query to search through columns
-            $query = DB::table($tableName);
-            $first = true;
+            // Check if the table is 'GT_Tasks', so we can include 'with' for eager loading
+            if ($tableName === 'GT_Tasks') {
+                // Use 'with' to eager load the 'project' relationship when searching in the 'GT_Tasks' table
+                $query = Task::with('project');
+            } else {
+                // Start building the query to search through columns
+                $query = DB::table($tableName);
+                $first = true;
+            }
+
 
             foreach ($columns as $column) {
                 // Skip primary keys or unwanted columns (Optional: Add logic to exclude certain columns)
