@@ -93,7 +93,7 @@ class AuthController extends Controller
             })
             ->first();  // Get the first organisation that matches either condition
 
-        $activeTimeTrack = TaskTimeTrack::with('task')
+        $activeTimeTrack = TaskTimeTrack::with('task.project')
             ->where('User_ID', $user->User_ID)
             ->whereNull('Time_Tracking_End_Time') // This checks for an active timer (no end time)
             ->first();

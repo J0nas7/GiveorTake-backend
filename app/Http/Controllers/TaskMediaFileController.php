@@ -6,6 +6,7 @@ use App\Models\TaskMediaFile;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage;
 
 class TaskMediaFileController extends Controller
 {
@@ -140,7 +141,14 @@ class TaskMediaFileController extends Controller
             return response()->json(['message' => 'Task media file not found'], 404);
         }
 
+        // Delete the physical file from storage
+        if (Storage::disk('public')->exists($mediaFile->Media_File_Path)) {
+            Storage::disk('public')->delete($mediaFile->Media_File_Path);
+        }
+
+        // Delete the record from the database
         $mediaFile->delete();
+
         return response()->json(['message' => 'Task media file deleted successfully.']);
     }
 }

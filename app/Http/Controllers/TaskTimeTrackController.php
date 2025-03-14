@@ -44,7 +44,8 @@ class TaskTimeTrackController extends Controller
         // Ensure that startTime and endTime are provided as query parameters
         $startTime = $request->query('startTime');
         $endTime = $request->query('endTime');
-        $userId = $request->query('userId');
+        $userIds = $request->query('userIds');
+        $taskIds = $request->query('taskIds');
 
         if (!$startTime || !$endTime) {
             return response()->json(['message' => 'Both startTime and endTime are required'], 400);
@@ -52,14 +53,24 @@ class TaskTimeTrackController extends Controller
 
         // Build the query to fetch TaskTimeTrack records for the given Project_ID
         $query = TaskTimeTrack::where('Project_ID', $projectId)
-            ->with('task', 'user'); // Include the related task and user details
+            ->with('task.project', 'user'); // Include the related task and user details
 
         // Filter by start and end time
         $query->where('Time_Tracking_Start_Time', '>=', $startTime)
             ->where('Time_Tracking_End_Time', '<=', $endTime);
 
-        if ($userId) {
-            $query->where('User_ID', $userId);
+        if ($userIds) {
+            $userIdsArray = json_decode($userIds, true); // Decode JSON string into an array
+            if (is_array($userIdsArray)) {
+                $query->whereIn('User_ID', $userIdsArray);
+            }
+        }
+
+        if ($taskIds) {
+            $taskIdsArray = json_decode($taskIds, true); // Decode JSON string into an array
+            if (is_array($taskIdsArray)) {
+                $query->whereIn('Task_ID', $taskIdsArray);
+            }
         }
 
         // Execute the query and get the results
@@ -67,7 +78,7 @@ class TaskTimeTrackController extends Controller
 
         // Check if any time tracks were found
         if ($timeTracks->isEmpty()) {
-            return response()->json(['message' => 'No time tracks found for this project']);
+            return response()->json(['message' => 'No time tracks found for the criterias']);
         }
 
         // Return the time tracks as a JSON response
