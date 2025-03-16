@@ -120,8 +120,8 @@ class TaskController extends Controller
         $task = Task::with([
             'project.team.userSeats.user',
             'timeTracks',
-            'comments',
-            'mediaFiles'
+            'comments.user',
+            'mediaFiles.user'
         ])
             ->where('Task_Key', $taskKey)
             ->where('Project_ID', $project->Project_ID) // Ensure task belongs to the project

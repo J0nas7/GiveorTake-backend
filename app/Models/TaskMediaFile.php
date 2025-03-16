@@ -31,7 +31,7 @@ class TaskMediaFile extends Model
         return $this->belongsTo(Task::class, 'Task_ID');
     }
 
-    public function uploadedBy()
+    public function user()
     {
         return $this->belongsTo(User::class, 'Uploaded_By_User_ID');
     }
