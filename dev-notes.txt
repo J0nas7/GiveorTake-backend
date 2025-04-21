@@ -1,4 +1,6 @@
-php artisan serve --host=192.168.50.86 --port=8000
+composer create-project laravel/laravel your-project-name
+
+php artisan serve --host=192.168.0.118 --port=8000
 
 
 PHP ARTISAN:
