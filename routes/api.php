@@ -182,6 +182,9 @@ Route::group(['middleware' => ['api']], function () {
         // Login and generate JWT
         Route::post('/auth/login', [AuthController::class, 'login'])->name('auth.login');
 
+        // Clone the token for the authenticated user
+        Route::post('/auth/clone-token', [AuthController::class, 'cloneToken']);
+
         // Logout the authenticated user
         Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
 

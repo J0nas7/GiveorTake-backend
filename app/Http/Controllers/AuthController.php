@@ -9,6 +9,8 @@ use App\Services\AuthService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
+use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
@@ -58,6 +60,39 @@ class AuthController extends Controller
     }
 
     /**
+     * This is useful for mobile apps to get a new token without re-entering credentials
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function cloneToken(Request $request)
+    {
+        try {
+            // Get user from incoming token
+            $user = Auth::guard('api')->user();
+
+            if (!$user) {
+                return response()->json(['error' => 'Invalid or expired token'], 401);
+            }
+
+            // Create a new token for the same user (new device)
+            $newToken = JWTAuth::fromUser($user);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'New token generated successfully',
+                'data' => [
+                    'user' => $user,
+                    'accessToken' => $newToken,
+                    // Optional: implement refresh tokens if you use them
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to generate token', 'details' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Logout the authenticated user.
      *
      * @return \Illuminate\Http\JsonResponse
@@ -88,7 +123,7 @@ class AuthController extends Controller
 
         $organisation = Organisation::with('teams.projects') // Eager load teams and projects
             ->where('User_ID', $user->User_ID)  // Check if the user is the owner of the organisation
-            ->orWhereHas('teams.userSeats', function($query) use ($user) {
+            ->orWhereHas('teams.userSeats', function ($query) use ($user) {
                 $query->where('User_ID', $user->User_ID);  // Check if the user has a seat in any team within the organisation
             })
             ->first();  // Get the first organisation that matches either condition
