@@ -37,6 +37,7 @@ class BacklogController extends BaseController
             'Team_ID' => 'nullable|integer|exists:GT_Teams,Team_ID',
             'Backlog_Name' => 'required|string|max:255',
             'Backlog_Description' => 'nullable|string',
+            'Backlog_IsPrimary' => 'boolean',
             'Backlog_StartDate' => 'nullable|date',
             'Backlog_EndDate' => 'nullable|date',
         ];

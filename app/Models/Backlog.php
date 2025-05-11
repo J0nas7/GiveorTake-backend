@@ -18,6 +18,7 @@ class Backlog extends Model
         'Team_ID',
         'Backlog_Name',
         'Backlog_Description',
+        'Backlog_IsPrimary',
         'Backlog_StartDate',
         'Backlog_EndDate',
     ];

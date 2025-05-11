@@ -86,6 +86,7 @@ class CreateProjectManagementTables extends Migration
             $table->bigInteger('Team_ID')->unsigned()->nullable(); // Optional link to team
             $table->string($prefix . 'Name', 255);
             $table->text($prefix . 'Description')->nullable();
+            $table->boolean($prefix . 'IsPrimary')->default(false);
             $table->dateTime($prefix . 'StartDate')->nullable();
             $table->dateTime($prefix . 'EndDate')->nullable();
 

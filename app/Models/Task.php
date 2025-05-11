@@ -15,7 +15,7 @@ class Task extends Model
 
     protected $fillable = [
         'Task_Key',
-        'Project_ID',
+        'Backlog_ID',
         'Team_ID',
         'Assigned_User_ID',
         'Task_Title',
@@ -33,11 +33,6 @@ class Task extends Model
     public function backlog()
     {
         return $this->belongsTo(Backlog::class, 'Backlog_ID');
-    }
-    
-    public function project()
-    {
-        return $this->belongsTo(Project::class, 'Project_ID');
     }
 
     public function team()
