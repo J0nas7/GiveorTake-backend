@@ -37,24 +37,6 @@ class CreateProjectManagementTables extends Migration
             $table->foreign('Organisation_ID')->references('Organisation_ID')->on('GT_Organisations')->onDelete('cascade');
         });
 
-        // Projects table (linked to an organisation)
-        Schema::create('GT_Projects', function (Blueprint $table) {
-            $prefix = 'Project_';
-
-            $table->bigIncrements($prefix . 'ID'); // Primary key
-            $table->bigInteger('Team_ID')->unsigned(); // Foreign key to Organisations
-            $table->string($prefix . 'Name', 255); // Project name
-            $table->string($prefix . 'Key', 5); // Project key
-            $table->text($prefix . 'Description')->nullable(); // Project description
-            $table->enum($prefix . 'Status', ['Planned', 'Active', 'Completed', 'On Hold'])->default('Planned'); // Status
-            $table->date($prefix . 'Start_Date')->nullable(); // Start date
-            $table->date($prefix . 'End_Date')->nullable(); // End date
-
-            MigrationHelper::addDateTimeFields($table, $prefix); // Add common dateTime fields
-
-            $table->foreign('Team_ID')->references('Team_ID')->on('GT_Teams')->onDelete('cascade');
-        });
-
         // Team Members table (linking users to teams)
         Schema::create('GT_Team_User_Seats', function (Blueprint $table) {
             $prefix = 'Seat_';
@@ -77,13 +59,49 @@ class CreateProjectManagementTables extends Migration
             $table->foreign('User_ID')->references('User_ID')->on('GT_Users')->onDelete('cascade');
         });
 
-        // Tasks table (assigned to projects & teams)
+        // Projects table (linked to an organisation)
+        Schema::create('GT_Projects', function (Blueprint $table) {
+            $prefix = 'Project_';
+
+            $table->bigIncrements($prefix . 'ID'); // Primary key
+            $table->bigInteger('Team_ID')->unsigned(); // Foreign key to Organisations
+            $table->string($prefix . 'Name', 255); // Project name
+            $table->string($prefix . 'Key', 5); // Project key
+            $table->text($prefix . 'Description')->nullable(); // Project description
+            $table->enum($prefix . 'Status', ['Planned', 'Active', 'Completed', 'On Hold'])->default('Planned'); // Status
+            $table->date($prefix . 'Start_Date')->nullable(); // Start date
+            $table->date($prefix . 'End_Date')->nullable(); // End date
+
+            MigrationHelper::addDateTimeFields($table, $prefix); // Add common dateTime fields
+
+            $table->foreign('Team_ID')->references('Team_ID')->on('GT_Teams')->onDelete('cascade');
+        });
+
+        // Backlogs table (linked to projects)
+        Schema::create('GT_Backlogs', function (Blueprint $table) {
+            $prefix = 'Backlog_';
+
+            $table->bigIncrements($prefix . 'ID'); // Primary key
+            $table->bigInteger('Project_ID')->unsigned()->nullable(); // Optional link to project
+            $table->bigInteger('Team_ID')->unsigned()->nullable(); // Optional link to team
+            $table->string($prefix . 'Name', 255);
+            $table->text($prefix . 'Description')->nullable();
+            $table->dateTime($prefix . 'StartDate')->nullable();
+            $table->dateTime($prefix . 'EndDate')->nullable();
+
+            MigrationHelper::addDateTimeFields($table, $prefix);
+
+            $table->foreign('Project_ID')->references('Project_ID')->on('GT_Projects')->onDelete('set null');
+            $table->foreign('Team_ID')->references('Team_ID')->on('GT_Teams')->onDelete('set null');
+        });
+
+        // Tasks table (assigned to backlogs & teams)
         Schema::create('GT_Tasks', function (Blueprint $table) {
             $prefix = 'Task_';
 
             $table->bigIncrements($prefix . 'ID'); // Primary key
             $table->bigInteger($prefix . 'Key')->unsigned(); // Project-related key to count number of tasks
-            $table->bigInteger('Project_ID')->unsigned(); // Foreign key to Projects
+            $table->bigInteger('Backlog_ID')->unsigned(); // Foreign key to Backlogs
             $table->bigInteger('Team_ID')->unsigned()->nullable(); // Optional: Assign to a team
             $table->bigInteger('Assigned_User_ID')->unsigned()->nullable(); // Optional: Assign to a user
             $table->string($prefix . 'Title', 255);
@@ -93,7 +111,7 @@ class CreateProjectManagementTables extends Migration
 
             MigrationHelper::addDateTimeFields($table, $prefix); // Add common dateTime fields
 
-            $table->foreign('Project_ID')->references('Project_ID')->on('GT_Projects')->onDelete('cascade');
+            $table->foreign('Backlog_ID')->references('Backlog_ID')->on('GT_Backlogs')->onDelete('cascade');
             $table->foreign('Team_ID')->references('Team_ID')->on('GT_Teams')->onDelete('set null');
             $table->foreign('Assigned_User_ID')->references('User_ID')->on('GT_Users')->onDelete('set null');
         });
@@ -101,7 +119,7 @@ class CreateProjectManagementTables extends Migration
         // Task Time Trackings Table
         Schema::create('GT_Task_Time_Trackings', function (Blueprint $table) {
             $prefix = 'Time_Tracking_';
-        
+
             $table->bigIncrements($prefix . 'ID'); // Primary key
             $table->bigInteger('Task_ID')->unsigned(); // Foreign key to tasks
             $table->bigInteger('User_ID')->unsigned(); // Foreign key to users
@@ -111,9 +129,9 @@ class CreateProjectManagementTables extends Migration
             $table->dateTime($prefix . 'End_Time')->nullable(); // End time of the tracking session (nullable if in progress)
             $table->integer($prefix . 'Duration')->unsigned()->nullable(); // Duration in minutes (optional, can be computed)
             $table->text($prefix . 'Notes')->nullable(); // Optional notes on the time entry
-        
+
             MigrationHelper::addDateTimeFields($table, $prefix); // Add common dateTime fields
-        
+
             $table->foreign('Task_ID')->references('Task_ID')->on('GT_Tasks')->onDelete('cascade');
             $table->foreign('User_ID')->references('User_ID')->on('GT_Users')->onDelete('cascade');
             $table->foreign('Project_ID')->references('Project_ID')->on('GT_Projects')->onDelete('cascade');
@@ -192,7 +210,7 @@ class CreateProjectManagementTables extends Migration
         Schema::dropIfExists('GT_Organisations');
         Schema::dropIfExists('GT_Team_User_Seats');
         Schema::dropIfExists('GT_Tasks');
-        // Schema::dropIfExists('GT_Task_Time_Trackings');
+        Schema::dropIfExists('GT_Task_Time_Trackings');
         Schema::dropIfExists('GT_Task_Comments');
         Schema::dropIfExists('GT_Task_Media_Files');
         Schema::dropIfExists('GT_Activity_Logs');

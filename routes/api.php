@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BacklogController;
 use App\Http\Controllers\UserController;
 
 use App\Http\Controllers\OrganisationController;
@@ -21,9 +22,9 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     /**
      * GET /users - index
      * POST /users - store
-     * GET /users/{property} - show
-     * PUT /users/{property} - update
-     * DELETE /users/{property} - destroy
+     * GET /users/{user} - show
+     * PUT /users/{user} - update
+     * DELETE /users/{user} - destroy
      * This single line of code handles all these CRUD routes:
      */
     Route::apiResource('users', UserController::class);
@@ -93,6 +94,21 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     Route::apiResource('projects', ProjectController::class);
     // Custom route to get projects by team ID
     Route::get('teams/{teamId}/projects', [ProjectController::class, 'getProjectsByTeam']);
+
+
+
+    // BacklogController Routes
+    /**
+     * GET /backlogs - index
+     * POST /backlogs - store
+     * GET /backlogs/{backlog} - show
+     * PUT /backlogs/{backlog} - update
+     * DELETE /backlogs/{backlog} - destroy
+     * This single line of code handles all these CRUD routes:
+     */
+    Route::apiResource('backlogs', BacklogController::class);
+    // Custom route to get backlogs by project ID
+    Route::get('teams/{teamId}/backlogs', [BacklogController::class, 'getBacklogsByProject']);
 
     
     

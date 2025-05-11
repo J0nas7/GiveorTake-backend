@@ -30,6 +30,11 @@ class Task extends Model
     const DELETED_AT = 'Task_DeletedAt';
 
     // Relationships
+    public function backlog()
+    {
+        return $this->belongsTo(Backlog::class, 'Backlog_ID');
+    }
+    
     public function project()
     {
         return $this->belongsTo(Project::class, 'Project_ID');
@@ -70,4 +75,3 @@ class Task extends Model
         return \Database\Factories\GTTaskFactory::new();
     }
 }
-?>

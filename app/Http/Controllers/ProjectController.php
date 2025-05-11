@@ -151,3 +151,4 @@ class ProjectController extends Controller
         return response()->json(['message' => 'Project deleted successfully.']); // Return success message
     }
 }
+?>
