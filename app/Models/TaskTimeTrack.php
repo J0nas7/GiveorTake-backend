@@ -14,7 +14,7 @@ class TaskTimeTrack extends Model
     protected $primaryKey = 'Time_Tracking_ID';
 
     protected $fillable = [
-        'Project_ID',
+        'Backlog_ID',
         'Task_ID',
         'User_ID',
         'Comment_ID',
@@ -34,9 +34,9 @@ class TaskTimeTrack extends Model
         return $this->belongsTo(Task::class, 'Task_ID');
     }
 
-    public function project()
+    public function backlog()
     {
-        return $this->belongsTo(Project::class, 'Project_ID');
+        return $this->belongsTo(Backlog::class, 'Backlog_ID');
     }
 
     public function user()

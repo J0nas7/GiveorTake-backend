@@ -32,14 +32,14 @@ class TaskTimeTrackController extends Controller
     }
 
     /**
-     * Get all task time tracks for a specific project with optional filtering by start and end time.
+     * Get all task time tracks for a specific backlog with optional filtering by start and end time.
      *
-     * @param int $projectId
+     * @param int $backlogId
      * @param string|null $startTime (optional)
      * @param string|null $endTime (optional)
      * @return JsonResponse
      */
-    public function getTaskTimeTracksByProject(int $projectId, Request $request): JsonResponse
+    public function getTaskTimeTracksByBacklog(int $backlogId, Request $request): JsonResponse
     {
         // Ensure that startTime and endTime are provided as query parameters
         $startTime = $request->query('startTime');
@@ -51,9 +51,9 @@ class TaskTimeTrackController extends Controller
             return response()->json(['message' => 'Both startTime and endTime are required'], 400);
         }
 
-        // Build the query to fetch TaskTimeTrack records for the given Project_ID
-        $query = TaskTimeTrack::where('Project_ID', $projectId)
-            ->with('task.project', 'user'); // Include the related task and user details
+        // Build the query to fetch TaskTimeTrack records for the given Backlog_ID
+        $query = TaskTimeTrack::where('Backlog_ID', $backlogId)
+            ->with('task.backlog.project', 'user'); // Include the related task and user details
 
         // Filter by start and end time
         $query->where('Time_Tracking_Start_Time', '>=', $startTime)
@@ -85,11 +85,11 @@ class TaskTimeTrackController extends Controller
         return response()->json($timeTracks);
     }
 
-    public function getLatestUniqueTaskTimeTracksByProject(int $projectId): JsonResponse
+    public function getLatestUniqueTaskTimeTracksByBacklog(int $backlogId): JsonResponse
     {
-        // Get the 10 latest unique task time tracks for the given project, including task details
-        $latestTimeTracks = TaskTimeTrack::whereHas('task', function ($query) use ($projectId) {
-            $query->where('Project_ID', $projectId);
+        // Get the 10 latest unique task time tracks for the given backlog, including task details
+        $latestTimeTracks = TaskTimeTrack::whereHas('task', function ($query) use ($backlogId) {
+            $query->where('Backlog_ID', $backlogId);
         })
             ->with('task') // Eager load related task data
             ->orderBy('Time_Tracking_Start_Time', 'desc') // Order by most recent start time
@@ -123,7 +123,7 @@ class TaskTimeTrackController extends Controller
     {
         $validated = $request->validate([
             'Task_ID' => 'required|integer|exists:GT_Tasks,Task_ID',
-            'Project_ID' => 'required|integer|exists:GT_Projects,Project_ID',
+            'Backlog_ID' => 'required|integer|exists:GT_Backlogs,Backlog_ID',
             'User_ID' => 'required|integer|exists:GT_Users,User_ID',
             'Comment_ID' => 'nullable|integer|exists:GT_Task_Comments,Comment_ID',
             'Time_Tracking_Start_Time' => 'required|date',

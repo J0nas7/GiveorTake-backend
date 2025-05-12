@@ -108,7 +108,10 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
      */
     Route::apiResource('backlogs', BacklogController::class);
     // Custom route to get backlogs by project ID
-    Route::get('teams/{teamId}/backlogs', [BacklogController::class, 'getBacklogsByProject']);
+    Route::get('projects/{projectId}/backlogs', [BacklogController::class, 'getBacklogsByProject']);
+    // Custom route to finish a backlog
+    Route::post('finish-backlog/{backlogId}', [BacklogController::class, 'finishBacklog']);
+
 
     
     
@@ -122,8 +125,8 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
      * This single line of code handles all these CRUD routes:
      */
     Route::apiResource('tasks', TaskController::class);
-    // Custom route to get tasks by project ID
-    Route::get('projects/{projectId}/tasks', [TaskController::class, 'getTasksByProject']);
+    // Custom route to get tasks by backlog ID
+    Route::get('backlogs/{backlogId}/tasks', [TaskController::class, 'getTasksByBacklog']);
     // Custom route to bulk-delete tasks by array of IDs
     Route::post('/tasks/bulk-destroy', [TaskController::class, 'bulkDestroy']);
     // Custom route to bulk-update tasks by array of data
@@ -143,10 +146,10 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     Route::apiResource('task-time-tracks', TaskTimeTrackController::class);
     // Custom route to get task-time-tracks by task ID
     Route::get('tasks/{taskId}/task-time-tracks', [TaskTimeTrackController::class, 'getTaskTimeTracksByTask']);
-    // Custom route to get task-time-tracks by project ID
-    Route::get('projects/{projectId}/task-time-tracks', [TaskTimeTrackController::class, 'getTaskTimeTracksByProject']);
+    // Custom route to get task-time-tracks by backlog ID
+    Route::get('projects/{projectId}/task-time-tracks', [TaskTimeTrackController::class, 'getTaskTimeTracksByBacklog']);
     // Custom route to get the 10 latest unique TaskTimeTracks by Project_ID
-    Route::get('projects/{projectId}/latest-task-time-tracks', [TaskTimeTrackController::class, 'getLatestUniqueTaskTimeTracksByProject']);
+    Route::get('projects/{projectId}/latest-task-time-tracks', [TaskTimeTrackController::class, 'getLatestUniqueTaskTimeTracksByBacklog']);
 
     
     // TaskCommentController Routes

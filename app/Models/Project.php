@@ -34,9 +34,9 @@ class Project extends Model
         return $this->belongsTo(Team::class, 'Team_ID');
     }
 
-    public function tasks()
+    public function backlogs()
     {
-        return $this->hasMany(Task::class, 'Project_ID');
+        return $this->hasMany(Backlog::class, 'Project_ID');
     }
 
     /**

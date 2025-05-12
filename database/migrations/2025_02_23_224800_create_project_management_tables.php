@@ -124,7 +124,7 @@ class CreateProjectManagementTables extends Migration
             $table->bigIncrements($prefix . 'ID'); // Primary key
             $table->bigInteger('Task_ID')->unsigned(); // Foreign key to tasks
             $table->bigInteger('User_ID')->unsigned(); // Foreign key to users
-            $table->bigInteger('Project_ID')->unsigned(); // Foreign key to projects
+            $table->bigInteger('Backlog_ID')->unsigned(); // Foreign key to projects
             $table->bigInteger('Comment_ID')->unsigned()->nullable(); // Foreign key to task comments
             $table->dateTime($prefix . 'Start_Time'); // Start time of the tracking session
             $table->dateTime($prefix . 'End_Time')->nullable(); // End time of the tracking session (nullable if in progress)
@@ -135,7 +135,7 @@ class CreateProjectManagementTables extends Migration
 
             $table->foreign('Task_ID')->references('Task_ID')->on('GT_Tasks')->onDelete('cascade');
             $table->foreign('User_ID')->references('User_ID')->on('GT_Users')->onDelete('cascade');
-            $table->foreign('Project_ID')->references('Project_ID')->on('GT_Projects')->onDelete('cascade');
+            $table->foreign('Backlog_ID')->references('Backlog_ID')->on('GT_Backlogs')->onDelete('cascade');
             $table->foreign('Comment_ID')->references('Comment_ID')->on('GT_Task_Comments')->onDelete('set null');
         });
 

@@ -113,6 +113,7 @@ class MyDemoSeeder extends Seeder
                         'Team_ID' => $team->Team_ID,
                         'Backlog_Name' => 'Product Backlog',
                         'Backlog_Description' => 'Contains all features and requirements for the product.',
+                        'Backlog_IsPrimary' => 1,
                         'Backlog_StartDate' => now(),
                         'Backlog_EndDate' => null,
                     ]);
@@ -122,6 +123,7 @@ class MyDemoSeeder extends Seeder
                         'Team_ID' => $team->Team_ID,
                         'Backlog_Name' => 'Sprint 1 Backlog',
                         'Backlog_Description' => 'Tasks to complete in the first sprint.',
+                        'Backlog_IsPrimary' => 0,
                         'Backlog_StartDate' => now()->subDays(14),
                         'Backlog_EndDate' => now()->subDays(7),
                     ]);
@@ -131,6 +133,7 @@ class MyDemoSeeder extends Seeder
                         'Team_ID' => $team->Team_ID,
                         'Backlog_Name' => 'Sprint 2 Backlog',
                         'Backlog_Description' => 'Tasks to complete in the second sprint.',
+                        'Backlog_IsPrimary' => 0,
                         'Backlog_StartDate' => now()->subDays(7),
                         'Backlog_EndDate' => now(),
                     ]);
@@ -140,6 +143,7 @@ class MyDemoSeeder extends Seeder
                         'Team_ID' => $team->Team_ID,
                         'Backlog_Name' => 'Bug Backlog',
                         'Backlog_Description' => 'List of known issues to fix.',
+                        'Backlog_IsPrimary' => 0,
                         'Backlog_StartDate' => now()->subMonth(),
                         'Backlog_EndDate' => null,
                     ]);
@@ -149,6 +153,7 @@ class MyDemoSeeder extends Seeder
                         'Team_ID' => $team->Team_ID,
                         'Backlog_Name' => 'Technical Backlog',
                         'Backlog_Description' => 'Includes refactoring and architectural tasks.',
+                        'Backlog_IsPrimary' => 0,
                         'Backlog_StartDate' => now()->subWeeks(3),
                         'Backlog_EndDate' => null,
                     ]);
@@ -229,7 +234,7 @@ class MyDemoSeeder extends Seeder
 
                             // Insert demo time track
                             TaskTimeTrack::create([
-                                'Project_ID' => $project->Project_ID,
+                                'Backlog_ID' => $task->Backlog_ID,
                                 'Task_ID' => $task->Task_ID,
                                 'User_ID' => $users->random()->User_ID,
                                 'Time_Tracking_Start_Time' => $startTime->toDateTimeString(),

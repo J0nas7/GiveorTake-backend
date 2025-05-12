@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Backlog;
 use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -12,19 +13,19 @@ use Illuminate\Support\Facades\Auth;
 class TaskController extends Controller
 {
     /**
-     * Display a listing of tasks based on Project ID.
+     * Display a listing of tasks based on Backlog ID.
      *
-     * @param int $projectId
+     * @param int $backlogId
      * @return JsonResponse
      */
-    public function getTasksByProject(int $projectId): JsonResponse
+    public function getTasksByBacklog(int $backlogId): JsonResponse
     {
-        $tasks = Task::with('project.team.userSeats.user', 'timeTracks', 'comments', 'mediaFiles') // Eager load project etc., comments and mediaFiles
-            ->where('Project_ID', $projectId) // Filter by Project_ID
+        $tasks = Task::with('backlog.project.team.userSeats.user', 'timeTracks', 'comments', 'mediaFiles') // Eager load backlog etc., comments and mediaFiles
+            ->where('Backlog_ID', $backlogId) // Filter by Backlog_ID
             ->get();
 
         if ($tasks->isEmpty()) {
-            return response()->json(['message' => 'No tasks found for this project'], 404);
+            return response()->json(['message' => 'No tasks found for this backlog'], 404);
         }
 
         return response()->json($tasks);
@@ -39,7 +40,7 @@ class TaskController extends Controller
      */
     public function index(): JsonResponse
     {
-        $tasks = Task::with('project', 'timeTracks', 'comments', 'mediaFiles')->get(); // Eager load project, comments and mediaFiles
+        $tasks = Task::with('backlog.project', 'timeTracks', 'comments', 'mediaFiles')->get(); // Eager load project, comments and mediaFiles
         return response()->json($tasks); // Return tasks as JSON
     }
 
@@ -64,7 +65,7 @@ class TaskController extends Controller
     {
         // Validate the request (without Task_Key)
         $validated = $request->validate([
-            'Project_ID' => 'required|integer|exists:GT_Projects,Project_ID',
+            'Backlog_ID' => 'required|integer|exists:GT_Backlogs,Backlog_ID',
             'Task_Title' => 'required|string|max:255',
             'Task_Description' => 'nullable|string',
             'Task_Status' => 'required|string',
@@ -72,8 +73,14 @@ class TaskController extends Controller
             'Task_Due_Date' => 'nullable|date',
         ]);
 
-        // Count all tasks including soft deleted ones
-        $taskCount = Task::withTrashed()->where('Project_ID', $validated['Project_ID'])->count();
+        $projectId = Backlog::where('Backlog_ID', $validated['Backlog_ID'])->value('Project_ID');
+        $backlogs = Backlog::where('Project_ID', $projectId)->get();
+        $taskCount = 0;
+        
+        foreach ($backlogs as $backlog) {
+            // Count all tasks including soft deleted ones
+            $taskCount += Task::withTrashed()->where('Backlog_ID', $backlog['Backlog_ID'])->count();
+        }
 
         // Generate Task_Key based on count
         $taskKey = $taskCount + 1;
@@ -116,15 +123,15 @@ class TaskController extends Controller
             return response()->json(['message' => 'Project not found'], 404); // Return 404 if not found
         }
 
-        // Find the matching task within the project
+        // Find the task with the matching key
         $task = Task::with([
-            'project.team.userSeats.user',
+            'backlog.project.team.userSeats.user',
             'timeTracks',
             'comments.user',
             'mediaFiles.user'
         ])
             ->where('Task_Key', $taskKey)
-            ->where('Project_ID', $project->Project_ID) // Ensure task belongs to the project
+            // ->where('Project_ID', $project->Project_ID) // Ensure task belongs to the project
             ->first();
 
         if (!$task) {
@@ -142,7 +149,7 @@ class TaskController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $task = Task::with('project.team.userSeats.user', 'timeTracks', 'comments', 'mediaFiles') // Eager load project etc., comments and mediaFiles
+        $task = Task::with('backlog.project.team.userSeats.user', 'timeTracks', 'comments', 'mediaFiles') // Eager load project etc., comments and mediaFiles
             ->find($id);
 
         if (!$task) {
@@ -174,7 +181,7 @@ class TaskController extends Controller
     public function update(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate([
-            'Project_ID' => 'required|integer|exists:GT_Projects,Project_ID', // Ensure the project exists
+            'Backlog_ID' => 'required|integer|exists:GT_Backlogs,Backlog_ID', // Ensure the backlog exists
             'Task_Title' => 'required|string|max:255',
             'Task_Description' => 'nullable|string',
             'Task_Status' => 'required|string',
@@ -203,6 +210,7 @@ class TaskController extends Controller
         $validated = $request->validate([
             'tasks' => 'required|array',
             'tasks.*.Task_ID' => 'required|integer|exists:GT_Tasks,Task_ID',
+            'tasks.*.Backlog_ID' => 'nullable|integer|exists:GT_Backlogs,Backlog_ID',
             'tasks.*.Task_Status' => 'nullable|string',
             'tasks.*.Task_Due_Date' => 'nullable|date',
             'tasks.*.Assigned_User_ID' => 'nullable|integer|exists:GT_Users,User_ID',
@@ -215,6 +223,7 @@ class TaskController extends Controller
 
             if ($task) {
                 $task->update([
+                    'Backlog_ID' => $taskData['Backlog_ID'] ?? $task->Backlog_ID,
                     'Task_Status' => $taskData['Task_Status'] ?? $task->Task_Status,
                     'Task_Due_Date' => $taskData['Task_Due_Date'] ?? $task->Task_Due_Date,
                     'Assigned_User_ID' => $taskData['Assigned_User_ID'] ?? $task->Assigned_User_ID,
