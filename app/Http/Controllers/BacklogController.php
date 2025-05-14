@@ -22,7 +22,8 @@ class BacklogController extends BaseController
      * @var array
      */
     protected array $with = [
-        'project',
+        'project.team.userSeats.user',
+        'project.team.organisation',
         'team',
         'tasks'
     ];

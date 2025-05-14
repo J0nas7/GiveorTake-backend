@@ -35,7 +35,7 @@ class TeamController extends Controller
      */
     public function index(): JsonResponse
     {
-        $teams = Team::with('organisation', 'projects')->get(); // Eager load organisation and projects
+        $teams = Team::with('organisation', 'projects.backlogs')->get(); // Eager load organisation and projects
         return response()->json($teams); // Return teams as JSON
     }
 
@@ -65,7 +65,7 @@ class TeamController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $team = Team::with('organisation', 'projects')->find($id); // Eager load organisation and projects
+        $team = Team::with('organisation', 'projects.backlogs')->find($id); // Eager load organisation and projects
 
         if (!$team) {
             return response()->json(['message' => 'Team not found'], 404); // Return 404 if not found
