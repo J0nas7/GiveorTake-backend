@@ -147,7 +147,7 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     // Custom route to get task-time-tracks by task ID
     Route::get('tasks/{taskId}/task-time-tracks', [TaskTimeTrackController::class, 'getTaskTimeTracksByTask']);
     // Custom route to get task-time-tracks by backlog ID
-    Route::get('projects/{projectId}/task-time-tracks', [TaskTimeTrackController::class, 'getTaskTimeTracksByBacklog']);
+    Route::get('projects/{projectId}/task-time-tracks', [TaskTimeTrackController::class, 'getTaskTimeTracksByProject']);
     // Custom route to get the 10 latest unique TaskTimeTracks by Project_ID
     Route::get('projects/{projectId}/latest-task-time-tracks', [TaskTimeTrackController::class, 'getLatestUniqueTaskTimeTracksByBacklog']);
 

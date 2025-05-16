@@ -6,6 +6,7 @@ use App\Models\TaskTimeTrack;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
+use App\Models\Backlog;
 
 class TaskTimeTrackController extends Controller
 {
@@ -32,14 +33,14 @@ class TaskTimeTrackController extends Controller
     }
 
     /**
-     * Get all task time tracks for a specific backlog with optional filtering by start and end time.
+     * Get all task time tracks for a specific project with optional filtering by start and end time.
      *
-     * @param int $backlogId
+     * @param int $projectId
      * @param string|null $startTime (optional)
      * @param string|null $endTime (optional)
      * @return JsonResponse
      */
-    public function getTaskTimeTracksByBacklog(int $backlogId, Request $request): JsonResponse
+    public function getTaskTimeTracksByProject(int $projectId, Request $request): JsonResponse
     {
         // Ensure that startTime and endTime are provided as query parameters
         $startTime = $request->query('startTime');
@@ -51,38 +52,47 @@ class TaskTimeTrackController extends Controller
             return response()->json(['message' => 'Both startTime and endTime are required'], 400);
         }
 
-        // Build the query to fetch TaskTimeTrack records for the given Backlog_ID
-        $query = TaskTimeTrack::where('Backlog_ID', $backlogId)
-            ->with('task.backlog.project', 'user'); // Include the related task and user details
+        $allTimeTracksByProject = [];
 
-        // Filter by start and end time
-        $query->where('Time_Tracking_Start_Time', '>=', $startTime)
-            ->where('Time_Tracking_End_Time', '<=', $endTime);
+        $backlogs = Backlog::where('Project_ID', $projectId)->get();
+        foreach ($backlogs as $backlog) {
+            // Build the query to fetch TaskTimeTrack records for the given Backlog_ID
+            $query = TaskTimeTrack::where('Backlog_ID', $backlog->Backlog_ID)
+                ->with('task.backlog.project', 'user'); // Include the related task and user details
 
-        if ($userIds) {
-            $userIdsArray = json_decode($userIds, true); // Decode JSON string into an array
-            if (is_array($userIdsArray)) {
-                $query->whereIn('User_ID', $userIdsArray);
+            // Filter by start and end time
+            $query->where('Time_Tracking_Start_Time', '>=', $startTime)
+                ->where('Time_Tracking_End_Time', '<=', $endTime);
+
+            if ($userIds) {
+                $userIdsArray = json_decode($userIds, true); // Decode JSON string into an array
+                if (is_array($userIdsArray) && count($userIdsArray)) {
+                    $query->whereIn('User_ID', $userIdsArray);
+                }
             }
-        }
 
-        if ($taskIds) {
-            $taskIdsArray = json_decode($taskIds, true); // Decode JSON string into an array
-            if (is_array($taskIdsArray)) {
-                $query->whereIn('Task_ID', $taskIdsArray);
+            if ($taskIds) {
+                $taskIdsArray = json_decode($taskIds, true); // Decode JSON string into an array
+                if (is_array($taskIdsArray) && count($taskIdsArray)) {
+                    $query->whereIn('Task_ID', $taskIdsArray);
+                }
             }
-        }
 
-        // Execute the query and get the results
-        $timeTracks = $query->get();
+            // Execute the query and get the results
+            // Get tracks and merge them into the main array
+            $timeTracksByBacklog = $query->get()->toArray();
+            $allTimeTracksByProject = array_merge($allTimeTracksByProject, $timeTracksByBacklog);
+        }
 
         // Check if any time tracks were found
-        if ($timeTracks->isEmpty()) {
-            return response()->json(['message' => 'No time tracks found for the criterias']);
+        if (!count($allTimeTracksByProject)) {
+            return response()->json([
+                'message' => 'No time tracks found for the criterias'
+            ]);
         }
 
         // Return the time tracks as a JSON response
-        return response()->json($timeTracks);
+        return response()->json($allTimeTracksByProject);
     }
 
     public function getLatestUniqueTaskTimeTracksByBacklog(int $backlogId): JsonResponse
