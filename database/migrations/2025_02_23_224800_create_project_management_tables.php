@@ -96,6 +96,24 @@ class CreateProjectManagementTables extends Migration
             $table->foreign('Team_ID')->references('Team_ID')->on('GT_Teams')->onDelete('set null');
         });
 
+        // Backlog Statuses table (linked to backlogs)
+        Schema::create('GT_Backlog_Statuses', function (Blueprint $table) {
+            $prefix = 'Status_';
+
+            $table->bigIncrements($prefix . 'ID'); // Primary key
+            $table->bigInteger('Backlog_ID')->unsigned(); // Foreign key to GT_Backlogs
+            $table->string($prefix . 'Name', 100); // Status display name
+            $table->string($prefix . 'Key', 50)->nullable(); // Optional key for internal reference
+            $table->integer($prefix . 'Order')->default(0); // Order in which status appears
+            $table->boolean($prefix . 'Is_Default')->default(false); // Default status flag
+            $table->boolean($prefix . 'Is_Closed')->default(false); // Closed status flag
+            $table->string($prefix . 'Color', 7)->nullable(); // Optional hex color for UI
+
+            MigrationHelper::addDateTimeFields($table, $prefix);
+
+            $table->foreign('Backlog_ID')->references('Backlog_ID')->on('GT_Backlogs')->onDelete('cascade');
+        });
+
         // Tasks table (assigned to backlogs & teams)
         Schema::create('GT_Tasks', function (Blueprint $table) {
             $prefix = 'Task_';
@@ -107,11 +125,12 @@ class CreateProjectManagementTables extends Migration
             $table->bigInteger('Assigned_User_ID')->unsigned()->nullable(); // Optional: Assign to a user
             $table->string($prefix . 'Title', 255);
             $table->text($prefix . 'Description')->nullable();
-            $table->enum($prefix . 'Status', ['To Do', 'In Progress', 'Waiting for Review', 'Done'])->default('To Do');
+            $table->bigInteger('Status_ID')->unsigned()->nullable(); // Add FK to new statuses
             $table->date($prefix . 'Due_Date')->nullable();
 
             MigrationHelper::addDateTimeFields($table, $prefix); // Add common dateTime fields
 
+            $table->foreign('Status_ID')->references('Status_ID')->on('GT_Backlog_Statuses')->onDelete('set null');
             $table->foreign('Backlog_ID')->references('Backlog_ID')->on('GT_Backlogs')->onDelete('cascade');
             $table->foreign('Team_ID')->references('Team_ID')->on('GT_Teams')->onDelete('set null');
             $table->foreign('Assigned_User_ID')->references('User_ID')->on('GT_Users')->onDelete('set null');
@@ -207,6 +226,7 @@ class CreateProjectManagementTables extends Migration
     public function down()
     {
         Schema::dropIfExists('GT_Projects');
+        Schema::dropIfExists('GT_Backlogs');
         Schema::dropIfExists('GT_Teams');
         Schema::dropIfExists('GT_Organisations');
         Schema::dropIfExists('GT_Team_User_Seats');

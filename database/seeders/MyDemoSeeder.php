@@ -6,6 +6,7 @@ use App\Models\Organisation;
 use App\Models\User;
 use App\Models\Project;
 use App\Models\Backlog;
+use App\Models\Status;
 use App\Models\Task;
 use App\Models\Team;
 use App\Models\TeamUserSeat;
@@ -160,16 +161,69 @@ class MyDemoSeeder extends Seeder
 
                     $taskNumber = 1;
 
-                    function createTasksForBacklog($tasks, $backlogId, $teamId, &$taskNumber)
+                    function seedStatusesForBacklog($backlog): array
                     {
+                        $preset = match ($backlog->Backlog_Name) {
+                            'Product Backlog' => [
+                                'Idea'      => ['color' => '#6c757d', 'order' => 1, 'is_default' => true],
+                                'Planned'   => ['color' => '#3490dc', 'order' => 2],
+                                'Approved'  => ['color' => '#38c172', 'order' => 3],
+                                'Discarded' => ['color' => '#e3342f', 'order' => 4, 'is_closed' => true],
+                            ],
+                            'Sprint 1 Backlog', 'Sprint 2 Backlog' => [
+                                'To Do'        => ['color' => '#3490dc', 'order' => 1, 'is_default' => true],
+                                'In Progress'  => ['color' => '#f6993f', 'order' => 2],
+                                'Code Review'  => ['color' => '#9561e2', 'order' => 3],
+                                'Done'         => ['color' => '#38c172', 'order' => 4, 'is_closed' => true],
+                            ],
+                            'Bug Backlog' => [
+                                'Reported'       => ['color' => '#6cb2eb', 'order' => 1, 'is_default' => true],
+                                'Acknowledged'   => ['color' => '#ffed4a', 'order' => 2],
+                                'Fixing/Testing' => ['color' => '#f6993f', 'order' => 3],
+                                'Resolved'       => ['color' => '#9561e2', 'order' => 4, 'is_closed' => true],
+                            ],
+                            'Technical Backlog' => [
+                                'Planned'     => ['color' => '#3490dc', 'order' => 1, 'is_default' => true],
+                                'Blocked'     => ['color' => '#e3342f', 'order' => 2],
+                                'In Progress' => ['color' => '#f6993f', 'order' => 3],
+                                'Completed'   => ['color' => '#38c172', 'order' => 4, 'is_closed' => true],
+                            ],
+                            default => [],
+                        };
+
+                        $statusMap = [];
+
+                        $i = 1;
+                        foreach ($preset as $name => $props) {
+                            $status = Status::create([
+                                'Backlog_ID'        => $backlog->Backlog_ID,
+                                'Status_Name'       => $name,
+                                'Status_Key'        => strtolower(str_replace(' ', '_', $name)),
+                                'Status_Order'      => $props['order'],
+                                'Status_Is_Default' => $props['is_default'] ?? false,
+                                'Status_Is_Closed'  => $props['is_closed'] ?? false,
+                                'Status_Color'      => $props['color'],
+                            ]);
+
+                            $statusMap[$i] = $status->Status_ID;
+                            $i++;
+                        }
+
+                        return $statusMap;
+                    }
+
+                    function createTasksForBacklog($tasks, $backlog, $teamId, &$taskNumber)
+                    {
+                        $statusMap = seedStatusesForBacklog($backlog);
+
                         foreach ($tasks as $task) {
                             Task::create([
                                 'Task_Key'         => $taskNumber++,
-                                'Backlog_ID'       => $backlogId,
+                                'Backlog_ID'       => $backlog->Backlog_ID,
                                 'Team_ID'          => $teamId,
                                 'Assigned_User_ID' => $task[3] ?? null,
                                 'Task_Title'       => $task[0],
-                                'Task_Status'      => $task[1],
+                                'Status_ID'        => $statusMap[$task[1]] ?? null, // Lookup by status name
                                 'Task_CreatedAt'   => $task[2],
                             ]);
                         }
@@ -177,33 +231,33 @@ class MyDemoSeeder extends Seeder
 
                     // Define sample tasks for each backlog
                     createTasksForBacklog([
-                        ["Design homepage layout", "To Do", "2024-02-01", 1],
-                        ["Set up database schema", "To Do", "2024-02-02", 2],
-                        ["Create registration API", "To Do", "2024-02-03", 3],
-                        ["Implement user profile", "To Do", "2024-02-04", 4],
-                    ], $productBacklog->Backlog_ID, $team->Team_ID, $taskNumber);
+                        ["Design homepage layout", rand(1, 4), "2024-02-01", 1],
+                        ["Set up database schema", rand(1, 4), "2024-02-02", 2],
+                        ["Create registration API", rand(1, 4), "2024-02-03", 3],
+                        ["Implement user profile", rand(1, 4), "2024-02-04", 4],
+                    ], $productBacklog, $team->Team_ID, $taskNumber);
 
                     createTasksForBacklog([
-                        ["Fix CSS issues in mobile view", "In Progress", "2024-01-27", 1],
-                        ["Add pagination to user list", "To Do", "2024-01-26", 2],
-                        ["Refactor authentication service", "In Progress", "2024-01-25", 3],
-                    ], $sprint1Backlog->Backlog_ID, $team->Team_ID, $taskNumber);
+                        ["Fix CSS issues in mobile view", rand(1, 4), "2024-01-27", 1],
+                        ["Add pagination to user list", rand(1, 4), "2024-01-26", 2],
+                        ["Refactor authentication service", rand(1, 4), "2024-01-25", 3],
+                    ], $sprint1Backlog, $team->Team_ID, $taskNumber);
 
                     createTasksForBacklog([
-                        ["Integrate payment gateway", "In Progress", "2024-01-20", 4],
-                        ["Write unit tests for order service", "To Do", "2024-01-19", 2],
-                        ["Optimize search functionality", "To Do", "2024-01-18", 5],
-                    ], $sprint2Backlog->Backlog_ID, $team->Team_ID, $taskNumber);
+                        ["Integrate payment gateway", rand(1, 4), "2024-01-20", 4],
+                        ["Write unit tests for order service", rand(1, 4), "2024-01-19", 2],
+                        ["Optimize search functionality", rand(1, 4), "2024-01-18", 5],
+                    ], $sprint2Backlog, $team->Team_ID, $taskNumber);
 
                     createTasksForBacklog([
-                        ["Fix redirect bug on form submit", "To Do", "2024-01-05", 3],
-                        ["Resolve API performance issue", "To Do", "2024-01-06", 1],
-                    ], $bugBacklog->Backlog_ID, $team->Team_ID, $taskNumber);
+                        ["Fix redirect bug on form submit", rand(1, 4), "2024-01-05", 3],
+                        ["Resolve API performance issue", rand(1, 4), "2024-01-06", 1],
+                    ], $bugBacklog, $team->Team_ID, $taskNumber);
 
                     createTasksForBacklog([
-                        ["Refactor legacy codebase", "To Do", "2024-01-04", 2],
-                        ["Implement service-layer pattern", "To Do", "2024-01-03", 5],
-                    ], $techBacklog->Backlog_ID, $team->Team_ID, $taskNumber);
+                        ["Refactor legacy codebase", rand(1, 4), "2024-01-04", 2],
+                        ["Implement service-layer pattern", rand(1, 4), "2024-01-03", 5],
+                    ], $techBacklog, $team->Team_ID, $taskNumber);
 
                     // Fetch first 5 tasks
                     $tasks = Task::whereIn('Task_ID', [1, 2, 3, 4, 5])->get();

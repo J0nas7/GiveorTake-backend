@@ -35,7 +35,7 @@ class ProjectController extends Controller
      */
     public function index(): JsonResponse
     {
-        $projects = Project::with('team', 'backlogs.tasks')->get(); // Eager load team and user
+        $projects = Project::with('team', 'backlogs.tasks', 'backlogs.statuses')->get(); // Eager load team and user
         return response()->json($projects); // Return projects as JSON
     }
 
@@ -83,7 +83,8 @@ class ProjectController extends Controller
         $project = Project::with([
             'team.organisation',  // Load the organisation related to the team
             'team.userSeats.user',    // Load the user seats within the team
-            'backlogs.tasks'               // Load tasks under the project
+            'backlogs.tasks',               // Load tasks under the project
+            'backlogs.statuses'               // Load statuses under the backlog
         ])->find($id);
 
         if (!$project) {

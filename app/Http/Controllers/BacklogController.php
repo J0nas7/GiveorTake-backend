@@ -25,6 +25,7 @@ class BacklogController extends BaseController
         'project.team.userSeats.user',
         'project.team.organisation',
         'team',
+        'statuses',
         'tasks'
     ];
 

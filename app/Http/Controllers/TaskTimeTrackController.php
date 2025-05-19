@@ -45,6 +45,7 @@ class TaskTimeTrackController extends Controller
         // Ensure that startTime and endTime are provided as query parameters
         $startTime = $request->query('startTime');
         $endTime = $request->query('endTime');
+        $backlogIds = $request->query('backlogIds');
         $userIds = $request->query('userIds');
         $taskIds = $request->query('taskIds');
 
@@ -63,6 +64,15 @@ class TaskTimeTrackController extends Controller
             // Filter by start and end time
             $query->where('Time_Tracking_Start_Time', '>=', $startTime)
                 ->where('Time_Tracking_End_Time', '<=', $endTime);
+
+            if ($backlogIds) {
+                $backlogIdsArray = json_decode($backlogIds, true); // Decode JSON string into an array
+                if (is_array($backlogIdsArray) && count($backlogIdsArray)) {
+                    $query->whereHas('task', function ($q) use ($backlogIdsArray) {
+                        $q->whereIn('Backlog_ID', $backlogIdsArray);
+                    });
+                }
+            }
 
             if ($userIds) {
                 $userIdsArray = json_decode($userIds, true); // Decode JSON string into an array
@@ -92,7 +102,12 @@ class TaskTimeTrackController extends Controller
         }
 
         // Return the time tracks as a JSON response
-        return response()->json($allTimeTracksByProject);
+        return response()->json([
+            "backlogIds" => $backlogIds,
+            "userIds" => $userIds,
+            "taskIds" => $taskIds,
+            "data" => $allTimeTracksByProject
+        ]);
     }
 
     public function getLatestUniqueTaskTimeTracksByBacklog(int $backlogId): JsonResponse

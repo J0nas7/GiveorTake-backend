@@ -20,7 +20,7 @@ class Task extends Model
         'Assigned_User_ID',
         'Task_Title',
         'Task_Description',
-        'Task_Status',
+        'Status_ID',
         'Task_Due_Date',
     ];
 
@@ -30,6 +30,11 @@ class Task extends Model
     const DELETED_AT = 'Task_DeletedAt';
 
     // Relationships
+    public function status()
+    {
+        return $this->belongsTo(Status::class, 'Status_ID');
+    }
+
     public function backlog()
     {
         return $this->belongsTo(Backlog::class, 'Backlog_ID');

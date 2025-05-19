@@ -46,6 +46,11 @@ class Backlog extends Model
         return $this->belongsTo(Team::class, 'Team_ID');
     }
 
+    public function statuses()
+    {
+        return $this->hasMany(Status::class, 'Backlog_ID');
+    }
+
     public function tasks()
     {
         return $this->hasMany(Task::class, 'Backlog_ID');

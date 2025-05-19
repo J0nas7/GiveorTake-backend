@@ -68,7 +68,7 @@ class TaskController extends Controller
             'Backlog_ID' => 'required|integer|exists:GT_Backlogs,Backlog_ID',
             'Task_Title' => 'required|string|max:255',
             'Task_Description' => 'nullable|string',
-            'Task_Status' => 'required|string',
+            'Status_ID' => 'required|integer|exists:GT_Backlog_Statuses,Status_ID',
             'Assigned_User_ID' => 'nullable|integer',
             'Task_Due_Date' => 'nullable|date',
         ]);
@@ -184,7 +184,7 @@ class TaskController extends Controller
             'Backlog_ID' => 'required|integer|exists:GT_Backlogs,Backlog_ID', // Ensure the backlog exists
             'Task_Title' => 'required|string|max:255',
             'Task_Description' => 'nullable|string',
-            'Task_Status' => 'required|string',
+            'Status_ID' => 'required|integer|exists:GT_Backlog_Statuses,Status_ID',
             'Task_Due_Date' => 'nullable|date',
             'Assigned_User_ID' => 'nullable|integer',
         ]);
@@ -211,7 +211,7 @@ class TaskController extends Controller
             'tasks' => 'required|array',
             'tasks.*.Task_ID' => 'required|integer|exists:GT_Tasks,Task_ID',
             'tasks.*.Backlog_ID' => 'nullable|integer|exists:GT_Backlogs,Backlog_ID',
-            'tasks.*.Task_Status' => 'nullable|string',
+            'tasks.*.Status_ID' => 'required|integer|exists:GT_Backlog_Statuses,Status_ID',
             'tasks.*.Task_Due_Date' => 'nullable|date',
             'tasks.*.Assigned_User_ID' => 'nullable|integer|exists:GT_Users,User_ID',
         ]);
@@ -224,7 +224,7 @@ class TaskController extends Controller
             if ($task) {
                 $task->update([
                     'Backlog_ID' => $taskData['Backlog_ID'] ?? $task->Backlog_ID,
-                    'Task_Status' => $taskData['Task_Status'] ?? $task->Task_Status,
+                    'Status_ID' => $taskData['Status_ID'] ?? $task->Status_ID,
                     'Task_Due_Date' => $taskData['Task_Due_Date'] ?? $task->Task_Due_Date,
                     'Assigned_User_ID' => $taskData['Assigned_User_ID'] ?? $task->Assigned_User_ID,
                 ]);
