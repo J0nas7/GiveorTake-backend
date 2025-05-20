@@ -103,7 +103,6 @@ class CreateProjectManagementTables extends Migration
             $table->bigIncrements($prefix . 'ID'); // Primary key
             $table->bigInteger('Backlog_ID')->unsigned(); // Foreign key to GT_Backlogs
             $table->string($prefix . 'Name', 100); // Status display name
-            $table->string($prefix . 'Key', 50)->nullable(); // Optional key for internal reference
             $table->integer($prefix . 'Order')->default(0); // Order in which status appears
             $table->boolean($prefix . 'Is_Default')->default(false); // Default status flag
             $table->boolean($prefix . 'Is_Closed')->default(false); // Closed status flag

@@ -198,7 +198,6 @@ class MyDemoSeeder extends Seeder
                             $status = Status::create([
                                 'Backlog_ID'        => $backlog->Backlog_ID,
                                 'Status_Name'       => $name,
-                                'Status_Key'        => strtolower(str_replace(' ', '_', $name)),
                                 'Status_Order'      => $props['order'],
                                 'Status_Is_Default' => $props['is_default'] ?? false,
                                 'Status_Is_Closed'  => $props['is_closed'] ?? false,
