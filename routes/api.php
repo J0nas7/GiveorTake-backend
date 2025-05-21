@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 
 use App\Http\Controllers\OrganisationController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\StatusController;
 use App\Http\Controllers\TaskCommentController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskMediaFileController;
@@ -111,6 +112,23 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     Route::get('projects/{projectId}/backlogs', [BacklogController::class, 'getBacklogsByProject']);
     // Custom route to finish a backlog
     Route::post('finish-backlog/{backlogId}', [BacklogController::class, 'finishBacklog']);
+
+
+
+    // StatusController Routes
+    /**
+     * GET /status - index
+     * POST /status - store
+     * GET /status/{status} - show
+     * PUT /status/{status} - update
+     * DELETE /status/{status} - destroy
+     * This single line of code handles all these CRUD routes:
+     */
+    Route::apiResource('status', StatusController::class);
+    // Adjust the Status_Order of a given Status by moving it up or down within its backlog.
+    Route::post('/statuses/{id}/move-order', [StatusController::class, 'moveOrder']);
+    // Assign the given status as the default for its backlog.
+    Route::post('statuses/{id}/assign-default', [StatusController::class, 'assignDefault']);
 
 
     

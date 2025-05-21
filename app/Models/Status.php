@@ -15,7 +15,6 @@ class Status extends Model
     protected $fillable = [
         'Backlog_ID',
         'Status_Name',
-        'Status_Key',
         'Status_Order',
         'Status_Is_Default',
         'Status_Is_Closed',
