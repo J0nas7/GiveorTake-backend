@@ -76,6 +76,8 @@ class StatusController extends BaseController
         // Delete the status
         $statusToDelete->delete();
 
+        $this->refreshOrder($statusToDelete->Backlog_ID);
+
         return response()->json([
             'message' => 'Status deleted successfully, and associated tasks reassigned to the default status.'
         ]);
@@ -90,40 +92,7 @@ class StatusController extends BaseController
         /** @var \App\Models\Status $newStatus */
         $newStatus = $this->modelClass::create($validated);
 
-        // Fetch all statuses with the same Backlog_ID
-        $statuses = \App\Models\Status::where('Backlog_ID', $newStatus->Backlog_ID)
-            ->get();
-
-        // Separate statuses into categories
-        $defaultStatus = $statuses->firstWhere('Status_Is_Default', true);
-        $closedStatus = $statuses->firstWhere('Status_Is_Closed', true);
-
-        $middleStatuses = $statuses->filter(function ($status) use ($defaultStatus, $closedStatus) {
-            return $status->Status_ID !== optional($defaultStatus)->Status_ID &&
-                $status->Status_ID !== optional($closedStatus)->Status_ID;
-        });
-
-        // Rebuild the new ordered list
-        $orderedStatuses = collect();
-
-        if ($defaultStatus) {
-            $orderedStatuses->push($defaultStatus);
-        }
-
-        $orderedStatuses = $orderedStatuses->merge(
-            $middleStatuses->sortBy('Status_ID') // or Status_Name, or any other desired order
-        );
-
-        if ($closedStatus && $closedStatus->Status_ID !== optional($defaultStatus)->Status_ID) {
-            $orderedStatuses->push($closedStatus);
-        }
-
-        // Reassign Status_Order starting from 1
-        $order = 1;
-        foreach ($orderedStatuses as $status) {
-            $status->Status_Order = $order++;
-            $status->save();
-        }
+        $this->refreshOrder($newStatus->Backlog_ID);
 
         // Return the newly created resource
         return response()->json($newStatus, 201);
@@ -188,7 +157,50 @@ class StatusController extends BaseController
         $status->save();
         $swapWith->save();
 
+        $this->refreshOrder($status->Backlog_ID);
+
         return response()->json(['message' => 'Status order updated successfully']);
+    }
+
+    /**
+     * Refresh the Status_Order for all statuses within the same Backlog_ID.
+     * Ensures the default status is first, closed status is last, and others are in between.
+     *
+     * @param  int  $id  The ID of one of the statuses in the backlog to refresh.
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function refreshOrder(int $backlogId)
+    {
+        // Get all statuses for this backlog, grouped by role
+        $statuses = \App\Models\Status::where('Backlog_ID', $backlogId)->get();
+
+        $default = $statuses->firstWhere('Status_Is_Default', true);
+        $closed = $statuses->firstWhere('Status_Is_Closed', true);
+
+        $others = $statuses
+            ->filter(fn($s) => !$s->Status_Is_Default && !$s->Status_Is_Closed)
+            ->sortBy('Status_Order')
+            ->values();
+
+        $order = 1;
+
+        // Assign default status first
+        if ($default) {
+            $default->Status_Order = $order++;
+            $default->save();
+        }
+
+        // Assign normal statuses
+        foreach ($others as $status) {
+            $status->Status_Order = $order++;
+            $status->save();
+        }
+
+        // Assign closed status last
+        if ($closed) {
+            $closed->Status_Order = $order;
+            $closed->save();
+        }
     }
 
     /**
@@ -238,6 +250,61 @@ class StatusController extends BaseController
         $status->Status_Order = 1;
         $status->save();
 
+        $this->refreshOrder($status->Backlog_ID);
+
         return response()->json(['message' => 'Default status assigned successfully.']);
+    }
+
+    /**
+     * Assign the given status as the closed status for its backlog.
+     *
+     * This method:
+     * - Prevents assigning a default status as closed.
+     * - Assigns the given status Status_Is_Closed = true and Status_Order = the highest order + 1.
+     * - If another status was previously the closed status, it:
+     *   - Sets Status_Is_Closed = false.
+     *   - Assigns it the old Status_Order of the new closed status.
+     *
+     * @param  int  $id  The ID of the status to assign as closed.
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function assignClosed(int $id): JsonResponse
+    {
+        /** @var \App\Models\Status $status */
+        $status = \App\Models\Status::find($id);
+
+        if (!$status) {
+            return response()->json(['message' => 'Status not found'], 404);
+        }
+
+        if ($status->Status_Is_Default) {
+            return response()->json(['message' => 'Default statuses cannot be set as closed'], 422);
+        }
+
+        $backlogId = $status->Backlog_ID;
+        $currentOrder = $status->Status_Order;
+
+        // Find the current closed status (excluding this one)
+        $existingClosed = \App\Models\Status::where('Backlog_ID', $backlogId)
+            ->where('Status_Is_Closed', true)
+            ->where('Status_ID', '!=', $status->Status_ID)
+            ->first();
+
+        // Swap order if another closed status exists
+        if ($existingClosed) {
+            $existingClosed->Status_Is_Closed = false;
+            $existingClosed->Status_Order = $currentOrder;
+            $existingClosed->save();
+        }
+
+        // Set this status as closed with the highest order + 1
+        $highestOrder = \App\Models\Status::where('Backlog_ID', $backlogId)->max('Status_Order');
+        $status->Status_Is_Closed = true;
+        $status->Status_Order = $highestOrder + 1;
+        $status->save();
+
+        $this->refreshOrder($status->Backlog_ID);
+
+        return response()->json(['message' => 'Closed status assigned successfully.']);
     }
 }

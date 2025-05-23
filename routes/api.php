@@ -129,6 +129,8 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     Route::post('/statuses/{id}/move-order', [StatusController::class, 'moveOrder']);
     // Assign the given status as the default for its backlog.
     Route::post('statuses/{id}/assign-default', [StatusController::class, 'assignDefault']);
+    // Assign the given status as the closed for its backlog.
+    Route::post('statuses/{id}/assign-closed', [StatusController::class, 'assignClosed']);
 
 
     
