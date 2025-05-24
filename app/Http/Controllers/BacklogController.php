@@ -114,6 +114,10 @@ class BacklogController extends BaseController
                 $targetBacklogId = $request->Backlog_ID;
             }
 
+            if ($targetBacklogId) {
+                $targetBacklog = Backlog::find($targetBacklogId);
+            }
+
             foreach ($unfinishedTasks as $task) {
                 $task->Backlog_ID = $targetBacklogId;
                 $task->save();
@@ -127,7 +131,8 @@ class BacklogController extends BaseController
             return response()->json([
                 'message' => 'Backlog finished and tasks moved successfully',
                 'moved_tasks_count' => $unfinishedTasks->count(),
-                'target_backlog_id' => $targetBacklogId
+                'target_backlog_id' => $targetBacklog->Backlog_ID,
+                'target_backlog_name' => $targetBacklog->Backlog_Name,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

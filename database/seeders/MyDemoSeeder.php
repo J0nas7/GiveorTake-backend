@@ -6,6 +6,8 @@ use App\Models\Organisation;
 use App\Models\User;
 use App\Models\Project;
 use App\Models\Backlog;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\Status;
 use App\Models\Task;
 use App\Models\Team;
@@ -86,25 +88,68 @@ class MyDemoSeeder extends Seeder
             ]);
 
             if ($team->Team_ID) {
-                $seat = TeamUserSeat::create([
-                    'Team_ID'   => $team->Team_ID,
-                    'User_ID'   => 2,
-                    'Seat_Role' => 'Member',  // Default role (change if needed)
+                // Create roles specific to the team
+                $adminRole = Role::create([
+                    'Team_ID'          => $team->Team_ID,
+                    'Role_Name'        => 'Admin',
+                    'Role_Description' => 'Team administrator with full permissions.',
+                    'Role_CreatedAt'   => now(),
+                    'Role_UpdatedAt'   => now(),
+                ]);
+
+                $memberRole = Role::create([
+                    'Team_ID'          => $team->Team_ID,
+                    'Role_Name'        => 'Member',
+                    'Role_Description' => 'Regular team member with limited permissions.',
+                    'Role_CreatedAt'   => now(),
+                    'Role_UpdatedAt'   => now(),
+                ]);
+
+                // Create some permissions (example keys)
+                $manageProjectPerm = Permission::create([
+                    'Team_ID'                => $team->Team_ID,
+                    'Permission_Key'         => 'manageProject',
+                    'Permission_Description' => 'Allows managing projects.',
+                    'Permission_CreatedAt'   => now(),
+                    'Permission_UpdatedAt'   => now(),
+                ]);
+
+                $viewTeamPerm = Permission::create([
+                    'Team_ID'                => $team->Team_ID,
+                    'Permission_Key'         => 'viewTeam',
+                    'Permission_Description' => 'Allows viewing the team details.',
+                    'Permission_CreatedAt'   => now(),
+                    'Permission_UpdatedAt'   => now(),
+                ]);
+
+                // Attach permissions to roles (example, you can use your RolePermission model or DB facade)
+                $adminRole->permissions()->attach([$manageProjectPerm->Permission_ID, $viewTeamPerm->Permission_ID]);
+                $memberRole->permissions()->attach([$viewTeamPerm->Permission_ID]);
+
+                // Assign a TeamUserSeat to a user with a role
+                TeamUserSeat::create([
+                    'Team_ID'             => $team->Team_ID,
+                    'User_ID'             => 2, // Assuming User with ID=2 exists (Alice)
+                    'Role_ID'             => $memberRole->Role_ID,
+                    'Seat_Status'         => 'Active',
+                    'Seat_Role_Description'=> 'Default member role',
+                    'Seat_Expiration'     => null,
+                    'Seat_CreatedAt'      => now(),
+                    'Seat_UpdatedAt'      => now(),
                 ]);
 
                 // Create a project under the team
                 $project = Project::create([
-                    'Team_ID'                 => $team->Team_ID, // Link to the team
-                    'Project_Name'            => 'Sample Project', // Set the project name
-                    'Project_Key'             => 'GOT', // Set the project key
-                    'Project_Description'     => 'This project is for managing time and tasks.', // Set project description
-                    'Project_Status'          => 'Active', // Project status (e.g., active)
-                    'Project_Start_Date'      => now(), // Set project start date
-                    'Project_End_Date'        => now()->addMonths(3), // Set project end date (3 months from now)
-
-                    'Project_CreatedAt'       => now(),
-                    'Project_UpdatedAt'       => now(),
-                    'Project_DeletedAt'       => null, // Optional
+                    'Team_ID'              => $team->Team_ID,
+                    'Project_Name'         => 'Sample Project',
+                    'Project_Key'          => 'GOT',
+                    'Project_Description'  => 'This project is for managing time and tasks.',
+                    'Project_Status'       => 'Active',
+                    'Project_Start_Date'   => now(),
+                    'Project_End_Date'     => now()->addMonths(3),
+                    'Project_CreatedAt'    => now(),
+                    'Project_UpdatedAt'    => now(),
+                    'Project_DeletedAt'    => null,
                 ]);
 
                 if ($project->Project_ID) {

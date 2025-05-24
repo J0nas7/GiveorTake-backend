@@ -13,33 +13,30 @@ class TeamUserSeat extends Model
 
     protected $primaryKey = 'Seat_ID';
 
-    // Defining the field names with prefix
     protected $fillable = [
         'Team_ID',
         'User_ID',
-        'Seat_Role',
+        'Role_ID',
         'Seat_Status',
         'Seat_Role_Description',
-        'Seat_Permissions',
+        'Seat_Expiration',
         'Seat_CreatedAt',
         'Seat_UpdatedAt',
         'Seat_DeletedAt',
     ];
 
-    // Defining the date fields
-    protected $dates = ['Seat_CreatedAt', 'Seat_UpdatedAt', 'Seat_DeletedAt'];
+    protected $dates = [
+        'Seat_Expiration',
+        'Seat_CreatedAt',
+        'Seat_UpdatedAt',
+        'Seat_DeletedAt',
+    ];
 
-    // Setting the custom names for the created_at, updated_at, and deleted_at fields
     const CREATED_AT = 'Seat_CreatedAt';
     const UPDATED_AT = 'Seat_UpdatedAt';
     const DELETED_AT = 'Seat_DeletedAt';
 
-    // Cast the Seat_Permissions to array for JSON storage
-    protected $casts = [
-        'Seat_Permissions' => 'array', // Ensure the permissions field is cast to array
-    ];
-
-    // Relationships: A seat belongs to a team and a user
+    // Relationships
     public function team()
     {
         return $this->belongsTo(Team::class, 'Team_ID', 'Team_ID');
@@ -49,5 +46,9 @@ class TeamUserSeat extends Model
     {
         return $this->belongsTo(User::class, 'User_ID');
     }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class, 'Role_ID', 'Role_ID');
+    }
 }
-?>

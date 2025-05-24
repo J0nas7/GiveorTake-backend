@@ -44,12 +44,13 @@ class CreateProjectManagementTables extends Migration
             $table->bigIncrements($prefix . 'ID'); // Primary key
             $table->bigInteger('Team_ID')->unsigned(); // Foreign key to GT_Teams
             $table->bigInteger('User_ID')->unsigned(); // Foreign key to Users
-            $table->string($prefix . 'Role'); // Seat role (e.g., Admin, Member, etc.)
+            $table->bigInteger('Role_ID')->unsigned(); // Foreign key to Roles
+            // $table->string($prefix . 'Role'); // Seat role (e.g., Admin, Member, etc.)
             $table->string($prefix . 'Status')->default('Active'); // Seat status (Active, Inactive, Pending, etc.)
 
             // Optional fields
             $table->string($prefix . 'Role_Description', 500)->nullable(); // Optional description of the role
-            $table->json($prefix . 'Permissions')->nullable(); // JSON field for storing permissions for this seat
+            // $table->json($prefix . 'Permissions')->nullable(); // JSON field for storing permissions for this seat
             $table->timestamp($prefix . 'Expiration')->nullable(); // Expiration date for seat assignment (optional)
 
             MigrationHelper::addDateTimeFields($table, $prefix); // Add common dateTime fields (CreatedAt, UpdatedAt, etc.)
@@ -57,6 +58,56 @@ class CreateProjectManagementTables extends Migration
             // Foreign Key Constraints
             $table->foreign('Team_ID')->references('Team_ID')->on('GT_Teams')->onDelete('cascade');
             $table->foreign('User_ID')->references('User_ID')->on('GT_Users')->onDelete('cascade');
+            $table->foreign('Role_ID')->references('Role_ID')->on('GT_Roles')->onDelete('cascade');
+        });
+
+        Schema::create('GT_Roles', function (Blueprint $table) {
+            $prefix = "Role_";
+
+            $table->bigIncrements($prefix . 'ID');
+            $table->bigInteger('Team_ID')->unsigned();
+            $table->string($prefix . 'Name', 100)->unique(); // e.g. Admin, Member
+            $table->string($prefix . 'Description', 500)->nullable();
+
+            MigrationHelper::addDateTimeFields($table, $prefix); // Add common dateTime fields (CreatedAt, UpdatedAt, etc.)
+
+            // Foreign Key Constraint
+            $table->foreign('Team_ID')->references('Team_ID')->on('GT_Teams')->onDelete('cascade');
+
+            // Prevent duplicate role names within the same team
+            $table->unique(['Team_ID', $prefix . 'Name']);
+        });
+
+        Schema::create('GT_Permissions', function (Blueprint $table) {
+            $prefix = "Permission_";
+
+            $table->bigIncrements($prefix . 'ID');
+            $table->bigInteger('Team_ID')->unsigned();
+            $table->string($prefix . 'Key', 100)->unique(); // e.g. manageTeam.view
+            $table->string($prefix . 'Description', 500)->nullable();
+
+            MigrationHelper::addDateTimeFields($table, $prefix);
+
+            // Foreign Key Constraint
+            $table->foreign('Team_ID')->references('Team_ID')->on('GT_Teams')->onDelete('cascade');
+
+            // Prevent duplicate permission keys within the same team
+            $table->unique(['Team_ID', $prefix . 'Key']); // Unique per team
+        });
+
+        Schema::create('GT_Role_Permissions', function (Blueprint $table) {
+            $prefix = "Role_Permission_";
+
+            $table->bigIncrements($prefix . 'ID');
+            $table->bigInteger('Role_ID')->unsigned();
+            $table->bigInteger('Permission_ID')->unsigned();
+
+            $table->foreign('Role_ID')->references('Role_ID')->on('GT_Roles')->onDelete('cascade');
+            $table->foreign('Permission_ID')->references('Permission_ID')->on('GT_Permissions')->onDelete('cascade');
+
+            MigrationHelper::addDateTimeFields($table, $prefix);
+
+            $table->unique(['Role_ID', 'Permission_ID']); // Prevent duplicates
         });
 
         // Projects table (linked to an organisation)
