@@ -132,7 +132,7 @@ class MyDemoSeeder extends Seeder
                     'User_ID'             => 2, // Assuming User with ID=2 exists (Alice)
                     'Role_ID'             => $memberRole->Role_ID,
                     'Seat_Status'         => 'Active',
-                    'Seat_Role_Description'=> 'Default member role',
+                    'Seat_Role_Description' => 'Default member role',
                     'Seat_Expiration'     => null,
                     'Seat_CreatedAt'      => now(),
                     'Seat_UpdatedAt'      => now(),
@@ -204,6 +204,76 @@ class MyDemoSeeder extends Seeder
                         'Backlog_EndDate' => null,
                     ]);
 
+                    // Generating and assigning RBAC permissions per project and backlog (admin gets "manage", member gets "access")
+                    // 1. Collect all backlogs into an array
+                    $backlogs = [$productBacklog, $sprint1Backlog, $sprint2Backlog, $bugBacklog, $techBacklog];
+
+                    // 2. Permissions container
+                    $permissionsToAttachToAdmin = [];
+                    $permissionsToAttachToMember = [];
+
+                    // 3. Project-level permissions
+                    $projectPermissions = [
+                        [
+                            'key' => "accessProject.{$project->Project_ID}",
+                            'description' => "Access Project: {$project->Project_Name}",
+                            'assignTo' => 'both',
+                        ],
+                        [
+                            'key' => "manageProject.{$project->Project_ID}",
+                            'description' => "Manage Project: {$project->Project_Name}",
+                            'assignTo' => 'admin',
+                        ]
+                    ];
+
+                    foreach ($projectPermissions as $permData) {
+                        $perm = Permission::create([
+                            'Team_ID'                => $team->Team_ID,
+                            'Permission_Key'         => $permData['key'],
+                            'Permission_Description' => $permData['description'],
+                            'Permission_CreatedAt'   => now(),
+                            'Permission_UpdatedAt'   => now(),
+                        ]);
+
+                        if ($permData['assignTo'] === 'admin' || $permData['assignTo'] === 'both') {
+                            $permissionsToAttachToAdmin[] = $perm->Permission_ID;
+                        }
+                        if ($permData['assignTo'] === 'both') {
+                            $permissionsToAttachToMember[] = $perm->Permission_ID;
+                        }
+                    }
+
+                    // 4. Backlog-level permissions
+                    foreach ($backlogs as $backlog) {
+                        $accessKey = "accessBacklog.{$backlog->Backlog_ID}";
+                        $manageKey = "manageBacklog.{$backlog->Backlog_ID}";
+
+                        $accessPerm = Permission::create([
+                            'Team_ID' => $team->Team_ID,
+                            'Permission_Key' => $accessKey,
+                            'Permission_Description' => "Access Backlog: {$backlog->Backlog_Name}",
+                            'Permission_CreatedAt' => now(),
+                            'Permission_UpdatedAt' => now(),
+                        ]);
+
+                        $managePerm = Permission::create([
+                            'Team_ID' => $team->Team_ID,
+                            'Permission_Key' => $manageKey,
+                            'Permission_Description' => "Manage Backlog: {$backlog->Backlog_Name}",
+                            'Permission_CreatedAt' => now(),
+                            'Permission_UpdatedAt' => now(),
+                        ]);
+
+                        $permissionsToAttachToAdmin[] = $accessPerm->Permission_ID;
+                        $permissionsToAttachToAdmin[] = $managePerm->Permission_ID;
+                        $permissionsToAttachToMember[] = $accessPerm->Permission_ID;
+                    }
+
+                    // 5. Attach to roles
+                    $adminRole->permissions()->attach($permissionsToAttachToAdmin);
+                    $memberRole->permissions()->attach($permissionsToAttachToMember);
+
+                    // Create tasks for backlogs
                     $taskNumber = 1;
 
                     function seedStatusesForBacklog($backlog): array

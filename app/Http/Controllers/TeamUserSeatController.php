@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
 use App\Models\TeamUserSeat;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -59,11 +60,11 @@ class TeamUserSeatController extends Controller
      * @param int $team_id
      * @return JsonResponse
      */
-    public function getTeamUserSeatsByTeamId(int $team_id): JsonResponse
+    public function getTeamUserSeatsByTeamId(int $teamId): JsonResponse
     {
         // Retrieve all user seats belonging to the specified Team ID
-        $seats = TeamUserSeat::where('Team_ID', $team_id)
-            ->with(['user']) // Eager load the User associated with each seat
+        $seats = TeamUserSeat::where('Team_ID', $teamId)
+            ->with(['user', 'role']) // Eager load the User associated with each seat
             ->get();
 
         if ($seats->isEmpty()) {
@@ -73,6 +74,50 @@ class TeamUserSeatController extends Controller
 
         // Return the user seats as JSON response
         return response()->json($seats);
+    }
+
+    /**
+     * Retrieve all roles associated with a specific team by its ID.
+     *
+     * @param int $teamId The ID of the team whose roles are to be retrieved.
+     * @return \Illuminate\Http\JsonResponse A JSON response containing the roles and their
+     *                                       permissions, or an error message if no roles are found.
+     */
+    public function getRolesByTeamId(int $teamId): JsonResponse
+    {
+        // Retrieve all roles for the specified team, eager loading permissions
+        $roles = Role::where('Team_ID', $teamId)
+            ->with('permissions') // Eager load permissions
+            ->get();
+
+        if ($roles->isEmpty()) {
+            return response()->json(['message' => 'No roles found for the specified team'], 404);
+        }
+
+        return response()->json($roles);
+    }
+
+    /**
+     * Remove a role and its associated permissions by role ID.
+     *
+     * @param int $roleId The ID of the role to be removed.
+     * @return \Illuminate\Http\JsonResponse A JSON response indicating the result of the operation.
+     */
+    public function removeRolesAndPermissionsByRoleId(int $roleId): JsonResponse
+    {
+        $role = Role::with('permissions')->find($roleId);
+
+        if (!$role) {
+            return response()->json(['message' => 'Role not found'], 404);
+        }
+
+        // Detach related permissions via pivot table
+        $role->permissions()->detach();
+
+        // Delete the role itself
+        $role->delete();
+
+        return response()->json(['message' => 'Role and associated permissions removed successfully.']);
     }
 
     //// The rest of this TeamUserSeatController is RESTful API methods ////

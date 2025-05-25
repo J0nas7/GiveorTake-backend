@@ -14,6 +14,7 @@ class Role extends Model
     protected $primaryKey = 'Role_ID';
 
     protected $fillable = [
+        'Team_ID',
         'Role_Name',
         'Role_Description',
         'Role_CreatedAt',
@@ -30,6 +31,12 @@ class Role extends Model
     const CREATED_AT = 'Role_CreatedAt';
     const UPDATED_AT = 'Role_UpdatedAt';
     const DELETED_AT = 'Role_DeletedAt';
+
+    // A Role belongs to a Team
+    public function team()
+    {
+        return $this->belongsTo(Team::class, 'Team_ID');
+    }
 
     // A Role belongs to many TeamUserSeats
     public function teamUserSeats()

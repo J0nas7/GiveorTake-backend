@@ -80,6 +80,10 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     Route::get('team-user-seats/teams-by-user/{user_id}', [TeamUserSeatController::class, 'findTeamsByUserID']);
     // Custom route to get all user seats by team ID
     Route::get('teams/{teamId}/team-user-seats', [TeamUserSeatController::class, 'getTeamUserSeatsByTeamId']);
+    // Custom route to get all roles and permissions by team ID
+    Route::get('teams/{teamId}/team-roles-permissions', [TeamUserSeatController::class, 'getRolesByTeamId']);
+    // Custom route to delete all roles and permissions by role ID
+    Route::delete('remove-roles-and-permissions/{roleId}', [TeamUserSeatController::class, 'removeRolesAndPermissionsByRoleId']);
 
     
     
