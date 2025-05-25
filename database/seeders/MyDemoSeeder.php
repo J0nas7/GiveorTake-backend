@@ -105,27 +105,6 @@ class MyDemoSeeder extends Seeder
                     'Role_UpdatedAt'   => now(),
                 ]);
 
-                // Create some permissions (example keys)
-                $manageProjectPerm = Permission::create([
-                    'Team_ID'                => $team->Team_ID,
-                    'Permission_Key'         => 'manageProject',
-                    'Permission_Description' => 'Allows managing projects.',
-                    'Permission_CreatedAt'   => now(),
-                    'Permission_UpdatedAt'   => now(),
-                ]);
-
-                $viewTeamPerm = Permission::create([
-                    'Team_ID'                => $team->Team_ID,
-                    'Permission_Key'         => 'viewTeam',
-                    'Permission_Description' => 'Allows viewing the team details.',
-                    'Permission_CreatedAt'   => now(),
-                    'Permission_UpdatedAt'   => now(),
-                ]);
-
-                // Attach permissions to roles (example, you can use your RolePermission model or DB facade)
-                $adminRole->permissions()->attach([$manageProjectPerm->Permission_ID, $viewTeamPerm->Permission_ID]);
-                $memberRole->permissions()->attach([$viewTeamPerm->Permission_ID]);
-
                 // Assign a TeamUserSeat to a user with a role
                 TeamUserSeat::create([
                     'Team_ID'             => $team->Team_ID,
@@ -211,6 +190,20 @@ class MyDemoSeeder extends Seeder
                     // 2. Permissions container
                     $permissionsToAttachToAdmin = [];
                     $permissionsToAttachToMember = [];
+
+                    $availablePermissions = ["Modify Organisation Settings", "Modify Team Settings", "Manage Team Members"];
+
+                    foreach ($availablePermissions as $permData) {
+                        $perm = Permission::create([
+                            'Team_ID'                => $team->Team_ID,
+                            'Permission_Key'         => $permData,
+                            'Permission_Description' => 'Description',
+                            'Permission_CreatedAt'   => now(),
+                            'Permission_UpdatedAt'   => now(),
+                        ]);
+
+                        $permissionsToAttachToAdmin[] = $perm->Permission_ID;
+                    }
 
                     // 3. Project-level permissions
                     $projectPermissions = [

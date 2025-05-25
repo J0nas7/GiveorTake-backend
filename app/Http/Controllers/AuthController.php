@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Organisation;
+use App\Models\Permission;
 use App\Models\TaskTimeTrack;
 use App\Models\TeamUserSeat;
 use App\Services\AuthService;
@@ -118,8 +119,20 @@ class AuthController extends Controller
 
         // Get all the teams where the user is assigned a seat
         $seats = TeamUserSeat::where('User_ID', $user->User_ID)
-            ->with(['team.organisation', 'team.projects']) // Eager load the related Team, Organisation and Projects model
+            ->with([
+                'team.organisation',
+                'team.projects',
+                'role.permissions'
+            ]) // Eager load the related Team, Organisation and Projects model, role and its permissions
             ->get();
+
+        // Collect all unique permissions from all roles across seats
+        $permissions = $seats
+            ->pluck('role.permissions') // Get all permissions from each role
+            ->flatten()
+            ->unique('Permission_Key') // Ensure no duplicate permissions
+            ->pluck('Permission_Key')  // Extract only the Permission_Key values
+            ->values(); // Re-index the array
 
         $organisation = Organisation::with('teams.projects') // Eager load teams and projects
             ->where('User_ID', $user->User_ID)  // Check if the user is the owner of the organisation
@@ -138,6 +151,7 @@ class AuthController extends Controller
             "message" => "Is logged in",
             "userData" => $user,
             "userSeats" => $seats,
+            "permissions" => $permissions,
             "userOrganisation" => $organisation,
             "userActiveTimeTrack" => $activeTimeTrack
         ], 200);
