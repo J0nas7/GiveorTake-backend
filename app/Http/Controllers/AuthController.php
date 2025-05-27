@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
@@ -155,5 +157,36 @@ class AuthController extends Controller
             "userOrganisation" => $organisation,
             "userActiveTimeTrack" => $activeTimeTrack
         ], 200);
+    }
+
+    /**
+     * Refreshes the JSON Web Token (JWT) for the authenticated user.
+     *
+     * @param \Illuminate\Http\Request $request The incoming HTTP request instance.
+     * @return \Illuminate\Http\JsonResponse JSON response containing the new access token or an error message.
+     */
+    public function refreshJWT(Request $request)
+    {
+        try {
+            // Get the current token from header
+            $token = JWTAuth::getToken();
+
+            if (!$token) {
+                return response()->json(['error' => 'Token not provided'], 401);
+            }
+
+            // Refresh the token
+            $newToken = JWTAuth::refresh($token);
+
+            return response()->json([
+                'accessToken' => $newToken,
+                'token_type' => 'bearer',
+                'expires_in' => config('jwt.ttl') * 60, // Convert minutes to seconds
+            ]);
+        } catch (TokenExpiredException $e) {
+            return response()->json(['error' => 'Token has expired and can no longer be refreshed'], 401);
+        } catch (JWTException $e) {
+            return response()->json(['error' => 'Could not refresh token'], 500);
+        }
     }
 }

@@ -235,5 +235,8 @@ Route::group(['middleware' => ['api']], function () {
 
         // Get authenticated user details (requires authentication)
         Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth:api')->name('auth.me');
+        
+        // Get authenticated user details (requires authentication)
+        Route::get('/auth/refreshJWT', [AuthController::class, 'refreshJWT'])->middleware('auth:api');
     });
 });
