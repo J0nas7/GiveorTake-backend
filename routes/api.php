@@ -19,60 +19,36 @@ use App\Http\Middleware\UserOnly;
 
 // Protected UserOnly Routes
 Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
-    // UserController Routes
-    /**
-     * GET /users - index
-     * POST /users - store
-     * GET /users/{user} - show
-     * PUT /users/{user} - update
-     * DELETE /users/{user} - destroy
-     * This single line of code handles all these CRUD routes:
-     */
+    /** UserController Routes
+     * GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
+     * This single line of code handles all these CRUD routes: */
     Route::apiResource('users', UserController::class);
     // Custom route to get user by user email
     Route::post('users/userByEmail', [UserController::class, 'getUserByEmail']);
 
 
     
-    // OrganisationController Routes
-    /**
-     * GET /organisations - index
-     * POST /organisations - store
-     * GET /organisations/{organisation} - show
-     * PUT /organisations/{organisation} - update
-     * DELETE /organisations/{organisation} - destroy
-     * This single line of code handles all these CRUD routes:
-     */
+    /** OrganisationController Routes
+     * GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
+     * This single line of code handles all these CRUD routes: */
     Route::apiResource('organisations', OrganisationController::class);
     // Custom route to get organisations by user ID
     Route::get('users/{userId}/organisations', [OrganisationController::class, 'getOrganisationsByUser']);
 
 
 
-    // TeamController Routes
-    /**
-     * GET /teams - index
-     * POST /teams - store
-     * GET /teams/{team} - show
-     * PUT /teams/{team} - update
-     * DELETE /teams/{team} - destroy
-     * This single line of code handles all these CRUD routes:
-     */
+    /** TeamController Routes
+     * GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
+     * This single line of code handles all these CRUD routes: */
     Route::apiResource('teams', TeamController::class);
     // Custom route to get teams by organisation ID
     Route::get('organisations/{organisationId}/teams', [TeamController::class, 'getTeamsByOrganisation']);
 
 
 
-    // TeamUserSeatController Routes
-    /**
-     * GET /team-user-seats - index
-     * POST /team-user-seats - store
-     * GET /team-user-seats/{team-user-seat} - show
-     * PUT /team-user-seats/{team-user-seat} - update
-     * DELETE /team-user-seats/{team-user-seat} - destroy
-     * This single line of code handles all these CRUD routes:
-     */
+    /** TeamUserSeatController Routes
+     * GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
+     * This single line of code handles all these CRUD routes: */
     Route::apiResource('team-user-seats', TeamUserSeatController::class);
     // Custom route to find a seat by team ID and user ID
     Route::get('team-user-seats/find/{team_id}/{user_id}', [TeamUserSeatController::class, 'findByTeamAndUser']);
@@ -91,30 +67,18 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
 
     
     
-    // ProjectController Routes
-    /**
-     * GET /projects - index
-     * POST /projects - store
-     * GET /projects/{project} - show
-     * PUT /projects/{project} - update
-     * DELETE /projects/{project} - destroy
-     * This single line of code handles all these CRUD routes:
-     */
+    /** ProjectController Routes
+     * GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
+     * This single line of code handles all these CRUD routes: */
     Route::apiResource('projects', ProjectController::class);
     // Custom route to get projects by team ID
     Route::get('teams/{teamId}/projects', [ProjectController::class, 'getProjectsByTeam']);
 
 
 
-    // BacklogController Routes
-    /**
-     * GET /backlogs - index
-     * POST /backlogs - store
-     * GET /backlogs/{backlog} - show
-     * PUT /backlogs/{backlog} - update
-     * DELETE /backlogs/{backlog} - destroy
-     * This single line of code handles all these CRUD routes:
-     */
+    /** BacklogController Routes
+     * GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
+     * This single line of code handles all these CRUD routes: */
     Route::apiResource('backlogs', BacklogController::class);
     // Custom route to get backlogs by project ID
     Route::get('projects/{projectId}/backlogs', [BacklogController::class, 'getBacklogsByProject']);
@@ -123,15 +87,9 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
 
 
 
-    // StatusController Routes
-    /**
-     * GET /status - index
-     * POST /status - store
-     * GET /status/{status} - show
-     * PUT /status/{status} - update
-     * DELETE /status/{status} - destroy
-     * This single line of code handles all these CRUD routes:
-     */
+    /** StatusController Routes
+     * GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
+     * This single line of code handles all these CRUD routes: */
     Route::apiResource('status', StatusController::class);
     // Adjust the Status_Order of a given Status by moving it up or down within its backlog.
     Route::post('/statuses/{id}/move-order', [StatusController::class, 'moveOrder']);
@@ -143,15 +101,9 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
 
     
     
-    // TaskController Routes
-    /**
-     * GET /tasks - index
-     * POST /tasks - store
-     * GET /tasks/{task} - show
-     * PUT /tasks/{task} - update
-     * DELETE /tasks/{task} - destroy
-     * This single line of code handles all these CRUD routes:
-     */
+    /** TaskController Routes
+     * GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
+     * This single line of code handles all these CRUD routes: */
     Route::apiResource('tasks', TaskController::class);
     // Custom route to get tasks by backlog ID
     Route::get('backlogs/{backlogId}/tasks', [TaskController::class, 'getTasksByBacklog']);
@@ -162,15 +114,9 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     // Custom route to get task by keys
     Route::get('taskByKeys/{projectKey}/{taskKey}', [TaskController::class, 'getTaskByKeys']);
 
-    // TaskTimeTrackController Routes
-    /**
-     * GET /task-time-tracks - index
-     * POST /task-time-tracks - store
-     * GET /task-time-tracks/{taskTimeTrack} - show
-     * PUT /task-time-tracks/{taskTimeTrack} - update
-     * DELETE /task-time-tracks/{taskTimeTrack} - destroy
-     * This single line of code handles all these CRUD routes:
-     */
+    /** TaskTimeTrackController Routes
+     * GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
+     * This single line of code handles all these CRUD routes: */
     Route::apiResource('task-time-tracks', TaskTimeTrackController::class);
     // Custom route to get task-time-tracks by task ID
     Route::get('tasks/{taskId}/task-time-tracks', [TaskTimeTrackController::class, 'getTaskTimeTracksByTask']);
@@ -180,28 +126,18 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     Route::get('projects/{projectId}/latest-task-time-tracks', [TaskTimeTrackController::class, 'getLatestUniqueTaskTimeTracksByBacklog']);
 
     
-    // TaskCommentController Routes
-    /**
-     * GET /task-comments - index
-     * POST /task-comments - store
-     * GET /task-comments/{taskComment} - show
-     * PUT /task-comments/{taskComment} - update
-     * DELETE /task-comments/{taskComment} - destroy
-     * This single line of code handles all these CRUD routes:
-     */
+    /** TaskCommentController Routes
+     * GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
+     * This single line of code handles all these CRUD routes: */
     Route::apiResource('task-comments', TaskCommentController::class);
     // Custom route to get task-comments by task ID
     Route::get('tasks/{taskId}/task-comments', [TaskCommentController::class, 'getCommentsByTask']);
+
+
     
-    // TaskMediaFileController Routes
-    /**
-     * GET /task-media-files - index
-     * POST /task-media-files - store
-     * GET /task-media-files/{taskMediaFile} - show
-     * PUT /task-media-files/{taskMediaFile} - update
-     * DELETE /task-media-files/{taskMediaFile} - destroy
-     * This single line of code handles all these CRUD routes:
-     */
+    /** TaskMediaFileController Routes
+     * GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
+     * This single line of code handles all these CRUD routes: */
     Route::apiResource('task-media-files', TaskMediaFileController::class);
     // Custom route to get task-media-files by task ID
     Route::get('tasks/{taskId}/task-media-files', [TaskMediaFileController::class, 'getMediaFilesByTask']);
