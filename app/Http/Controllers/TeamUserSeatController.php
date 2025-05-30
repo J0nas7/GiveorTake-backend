@@ -99,6 +99,47 @@ class TeamUserSeatController extends Controller
     }
 
     /**
+     * Store a newly created team role and assign permissions.
+     *
+     * @param  \Illuminate\Http\Request  $request  The HTTP request containing role data.
+     * @return \Illuminate\Http\JsonResponse  JSON response with creation status and role data.
+     *
+     * @throws \Illuminate\Validation\ValidationException If validation fails.
+     */
+    public function storeTeamRole(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'Team_ID' => 'required|exists:GT_Teams,Team_ID',
+            'Role_Name' => 'required|string|max:255',
+            'Role_Description' => 'nullable|string|max:500',
+            'permissions' => 'nullable|array',
+            'permissions.*.Permission_Key' => 'required|string'
+        ]);
+
+        // Create the new role
+        $role = Role::create([
+            'Team_ID' => $validated['Team_ID'],
+            'Role_Name' => $validated['Role_Name'],
+            'Role_Description' => $validated['Role_Description'] ?? null,
+        ]);
+
+        // If permissions are provided, attach them
+        if (!empty($validated['permissions'])) {
+            $permissionKeys = collect($validated['permissions'])->pluck('Permission_Key')->all();
+
+            $permissionIds = Permission::whereIn('Permission_Key', $permissionKeys)->pluck('Permission_ID')->toArray();
+
+            // Attach permissions to the role
+            $role->permissions()->sync($permissionIds);
+        }
+
+        return response()->json([
+            'message' => 'Role created successfully.',
+            'role' => $role->load('permissions'),
+        ], 201);
+    }
+
+    /**
      * Update the specified team role and its permissions.
      *
      * @param  \Illuminate\Http\Request  $request  The HTTP request containing role data.

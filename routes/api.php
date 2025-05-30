@@ -84,6 +84,8 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     Route::get('teams/{teamId}/team-roles-permissions', [TeamUserSeatController::class, 'getRolesByTeamId']);
     // Custom route to delete all roles and permissions by role ID
     Route::delete('team-roles/{teamRoleId}', [TeamUserSeatController::class, 'destroyTeamRole']);
+    // Custom route creates a team role by team ID.
+    Route::post('team-roles', [TeamUserSeatController::class, 'storeTeamRole']);
     // Custom route updates a team role by its ID.
     Route::put('team-roles/{teamRoleId}', [TeamUserSeatController::class, 'updateTeamRole']);
 
