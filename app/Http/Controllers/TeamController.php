@@ -9,6 +9,11 @@ use Illuminate\Http\JsonResponse;
 
 class TeamController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth:api', 'check.permission:Modify Organisation Settings'])->only('store');
+        $this->middleware(['auth:api', 'check.permission:Modify Team Settings'])->only(['update', 'destroy']);
+    }
     /**
      * Display a listing of teams based on Organisation ID.
      *

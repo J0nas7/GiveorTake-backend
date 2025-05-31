@@ -9,6 +9,12 @@ use Illuminate\Http\JsonResponse;
 
 class OrganisationController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth:api', 'check.permission:Modify Organisation Settings'])
+            ->only(['update', 'destroy']);
+    }
+
     /**
      * Display a listing of organisations based on User ID.
      *

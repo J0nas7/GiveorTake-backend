@@ -10,6 +10,11 @@ use Illuminate\Http\JsonResponse;
 
 class TeamUserSeatController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth:api', 'check.permission:Manage Team Members'])->only(['store', 'update', 'destroy']);
+    }
+
     /**
      * Find a seat based on Team ID and User ID.
      *

@@ -27,12 +27,12 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     Route::post('users/userByEmail', [UserController::class, 'getUserByEmail']);
 
 
-    
+
     /** OrganisationController Routes
      * GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
      * This single line of code handles all these CRUD routes: */
     Route::apiResource('organisations', OrganisationController::class);
-    // Custom route to get organisations by user ID
+    // Custom route to get organisations by user ID1
     Route::get('users/{userId}/organisations', [OrganisationController::class, 'getOrganisationsByUser']);
 
 
@@ -59,14 +59,17 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     // Custom route to get all roles and permissions by team ID
     Route::get('teams/{teamId}/team-roles-permissions', [TeamUserSeatController::class, 'getRolesByTeamId']);
     // Custom route to delete all roles and permissions by role ID
-    Route::delete('team-roles/{teamRoleId}', [TeamUserSeatController::class, 'destroyTeamRole']);
+    Route::delete('team-roles/{teamRoleId}', [TeamUserSeatController::class, 'destroyTeamRole'])
+        ->middleware(['auth:api', 'check.permission:Manage Team Members']);
     // Custom route creates a team role by team ID.
-    Route::post('team-roles', [TeamUserSeatController::class, 'storeTeamRole']);
+    Route::post('team-roles', [TeamUserSeatController::class, 'storeTeamRole'])
+        ->middleware(['auth:api', 'check.permission:Manage Team Members']);
     // Custom route updates a team role by its ID.
-    Route::put('team-roles/{teamRoleId}', [TeamUserSeatController::class, 'updateTeamRole']);
+    Route::put('team-roles/{teamRoleId}', [TeamUserSeatController::class, 'updateTeamRole'])
+        ->middleware(['auth:api', 'check.permission:Manage Team Members']);
 
-    
-    
+
+
     /** ProjectController Routes
      * GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
      * This single line of code handles all these CRUD routes: */
@@ -99,8 +102,8 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     Route::post('statuses/{id}/assign-closed', [StatusController::class, 'assignClosed']);
 
 
-    
-    
+
+
     /** TaskController Routes
      * GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
      * This single line of code handles all these CRUD routes: */
@@ -125,7 +128,7 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     // Custom route to get the 10 latest unique TaskTimeTracks by Project_ID
     Route::get('projects/{projectId}/latest-task-time-tracks', [TaskTimeTrackController::class, 'getLatestUniqueTaskTimeTracksByBacklog']);
 
-    
+
     /** TaskCommentController Routes
      * GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
      * This single line of code handles all these CRUD routes: */
@@ -134,14 +137,14 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
     Route::get('tasks/{taskId}/task-comments', [TaskCommentController::class, 'getCommentsByTask']);
 
 
-    
+
     /** TaskMediaFileController Routes
      * GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
      * This single line of code handles all these CRUD routes: */
     Route::apiResource('task-media-files', TaskMediaFileController::class);
     // Custom route to get task-media-files by task ID
     Route::get('tasks/{taskId}/task-media-files', [TaskMediaFileController::class, 'getMediaFilesByTask']);
-    
+
     // UtilityController Routes
     // Custom route to get global search results
     Route::get('search/{userId}/{searchString}', [UtilityController::class, 'globalSearch']);
@@ -173,7 +176,7 @@ Route::group(['middleware' => ['api']], function () {
 
         // Get authenticated user details (requires authentication)
         Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth:api')->name('auth.me');
-        
+
         // Get authenticated user details (requires authentication)
         Route::get('/auth/refreshJWT', [AuthController::class, 'refreshJWT'])->middleware('auth:api');
     });

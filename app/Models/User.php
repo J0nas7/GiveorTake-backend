@@ -47,6 +47,32 @@ class User extends Authenticatable implements JWTSubject
     const UPDATED_AT = 'User_UpdatedAt';
     const DELETED_AT = 'User_DeletedAt';
 
+    public function roles()
+    {
+        return $this->hasMany(Role::class, 'User_ID');
+    }
+
+    /**
+     * Check if the user has a specific permission based on their assigned roles.
+     *
+     * Iterates through all roles assigned to the user and checks if any of the roles
+     * contain the specified permission key.
+     *
+     * @param string $permissionKey The key of the permission to check for.
+     * @return bool Returns true if the user has the specified permission, false otherwise.
+     */
+    public function hasPermission(string $permissionKey): bool
+    {
+        foreach ($this->roles as $role) {
+            foreach ($role->permissions as $permission) {
+                if ($permission->Permission_Key === $permissionKey) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     // The database field that should be returned on Eloquent's request
     public function getAuthPassword()
     {

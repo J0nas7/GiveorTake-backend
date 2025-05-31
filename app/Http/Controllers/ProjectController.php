@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\PermissionHelper;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -9,6 +10,11 @@ use Illuminate\Http\JsonResponse;
 
 class ProjectController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth:api', 'check.permission:Modify Team Settings'])->only('store');
+    }
+
     /**
      * Display a listing of projects based on Team ID.
      *
@@ -23,7 +29,10 @@ class ProjectController extends Controller
             return response()->json(['message' => 'No projects found for this team'], 404);
         }
 
-        return response()->json($projects);
+        // Filter to only include accessible projects
+        $filteredProjects = PermissionHelper::filterByPermission($projects, 'accessProject', 'Project_ID');
+
+        return response()->json($filteredProjects);
     }
 
     //// The rest of this ProjectController is RESTful API methods ////
@@ -35,19 +44,7 @@ class ProjectController extends Controller
      */
     public function index(): JsonResponse
     {
-        $projects = Project::with('team', 'backlogs.tasks', 'backlogs.statuses')->get(); // Eager load team and user
-        return response()->json($projects); // Return projects as JSON
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     * This method is not typically used in an API.
-     *
-     * @return JsonResponse
-     */
-    public function create(): JsonResponse
-    {
-        return response()->json(['message' => 'Use the POST method to create a project.'], 405); // Method Not Allowed
+        return response()->json(['message' => 'Need a team-context to read projects']);
     }
 
     /**
@@ -91,19 +88,12 @@ class ProjectController extends Controller
             return response()->json(['message' => 'Project not found'], 404); // Return 404 if not found
         }
 
-        return response()->json($project); // Return the project as JSON
-    }
+        // Permission check
+        if ($response = PermissionHelper::denyIfNoPermission('accessProject', $project->Project_ID)) {
+            return $response;
+        }
 
-    /**
-     * Show the form for editing the specified resource.
-     * This method is not typically used in an API.
-     *
-     * @param int $id
-     * @return JsonResponse
-     */
-    public function edit(int $id): JsonResponse
-    {
-        return response()->json(['message' => 'Use the PUT or PATCH method to edit a project.'], 405); // Method Not Allowed
+        return response()->json($project); // Return the project as JSON
     }
 
     /**
@@ -130,6 +120,11 @@ class ProjectController extends Controller
             return response()->json(['message' => 'Project not found'], 404); // Return 404 if not found
         }
 
+        // Permission check
+        if ($response = PermissionHelper::denyIfNoPermission('manageProject', $project->Project_ID)) {
+            return $response;
+        }
+
         $project->update($validated); // Update the project
         return response()->json($project); // Return the updated project as JSON
     }
@@ -148,8 +143,12 @@ class ProjectController extends Controller
             return response()->json(['message' => 'Project not found'], 404); // Return 404 if not found
         }
 
+        // Permission check
+        if ($response = PermissionHelper::denyIfNoPermission('manageProject', $project->Project_ID)) {
+            return $response;
+        }
+
         $project->delete(); // Soft delete the project
         return response()->json(['message' => 'Project deleted successfully.']); // Return success message
     }
 }
-?>
