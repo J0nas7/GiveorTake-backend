@@ -372,13 +372,33 @@ class MyDemoSeeder extends Seeder
 
                     foreach ($tasks as $task) {
                         for ($i = 1; $i <= 5; $i++) {
-                            TaskComment::create([
+                            $taskComment = TaskComment::create([
                                 'Task_ID' => $task->Task_ID,
                                 'User_ID' => $users->random()->User_ID,
                                 'Comment_Text' => "Demo comment #$i for Task #{$task->Task_Key}",
                                 'Comment_CreatedAt' => now(),
                                 'Comment_UpdatedAt' => now(),
                             ]);
+
+                            $taskNestedComment = TaskComment::create([
+                                'Task_ID' => $task->Task_ID,
+                                'Parent_Comment_ID' => $taskComment->Comment_ID,
+                                'User_ID' => $users->random()->User_ID,
+                                'Comment_Text' => "Nested comment in #$taskComment->Comment_ID",
+                                'Comment_CreatedAt' => now(),
+                                'Comment_UpdatedAt' => now(),
+                            ]);
+
+                            for ($j = 1; $j <= 2; $j++) {
+                                TaskComment::create([
+                                    'Task_ID' => $task->Task_ID,
+                                    'Parent_Comment_ID' => $taskNestedComment->Comment_ID,
+                                    'User_ID' => $users->random()->User_ID,
+                                    'Comment_Text' => "Deep-Nested comment #$j in #$taskNestedComment->Comment_ID",
+                                    'Comment_CreatedAt' => now(),
+                                    'Comment_UpdatedAt' => now(),
+                                ]);
+                            }
                         }
                     }
 

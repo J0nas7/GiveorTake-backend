@@ -16,6 +16,7 @@ class TaskComment extends Model
     protected $fillable = [
         'Task_ID',
         'User_ID',
+        'Parent_Comment_ID',
         'Time_Tracking_ID',
         'Comment_Text',
     ];
@@ -24,6 +25,16 @@ class TaskComment extends Model
     const CREATED_AT = 'Comment_CreatedAt';
     const UPDATED_AT = 'Comment_UpdatedAt';
     const DELETED_AT = 'Comment_DeletedAt';
+
+    public function parentComment()
+    {
+        return $this->belongsTo(TaskComment::class, 'Parent_Comment_ID', 'Comment_ID');
+    }
+
+    public function childrenComments()
+    {
+        return $this->hasMany(TaskComment::class, 'Parent_Comment_ID', 'Comment_ID');
+    }
 
     public function task()
     {
@@ -40,4 +51,3 @@ class TaskComment extends Model
         return $this->belongsTo(TaskTimeTrack::class, 'Time_Tracking_ID');
     }
 }
-?>

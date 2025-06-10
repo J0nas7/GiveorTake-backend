@@ -47,9 +47,9 @@ class User extends Authenticatable implements JWTSubject
     const UPDATED_AT = 'User_UpdatedAt';
     const DELETED_AT = 'User_DeletedAt';
 
-    public function roles()
+    public function teamUserSeat()
     {
-        return $this->hasMany(Role::class, 'User_ID');
+        return $this->belongsTo(TeamUserSeat::class, 'User_ID');
     }
 
     /**
@@ -63,11 +63,9 @@ class User extends Authenticatable implements JWTSubject
      */
     public function hasPermission(string $permissionKey): bool
     {
-        foreach ($this->roles as $role) {
-            foreach ($role->permissions as $permission) {
-                if ($permission->Permission_Key === $permissionKey) {
-                    return true;
-                }
+        foreach ($this->teamUserSeat->role->permissions as $permission) {
+            if ($permission->Permission_Key === $permissionKey) {
+                return true;
             }
         }
         return false;

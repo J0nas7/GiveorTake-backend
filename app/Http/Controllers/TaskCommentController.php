@@ -17,7 +17,9 @@ class TaskCommentController extends Controller
      */
     public function getCommentsByTask(int $taskId): JsonResponse
     {
-        $comments = TaskComment::where('Task_ID', $taskId)->get();
+        $comments = TaskComment::with(['childrenComments', 'parentComment'])
+            ->where('Task_ID', $taskId)
+            ->get();
 
         if ($comments->isEmpty()) {
             return response()->json(['message' => 'No comments found for this task'], 404);
@@ -51,6 +53,7 @@ class TaskCommentController extends Controller
             'Task_ID' => 'required|integer|exists:GT_Tasks,Task_ID',
             'User_ID' => 'required|integer|exists:GT_Users,User_ID',
             'Comment_Text' => 'required|string',
+            'Parent_Comment_ID' => 'nullable|integer|exists:GT_Task_Comments,Comment_ID',
         ]);
 
         $comment = TaskComment::create($validated);
@@ -65,7 +68,7 @@ class TaskCommentController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $comment = TaskComment::find($id);
+        $comment = TaskComment::with(['childrenComments', 'user'])->find($id);
 
         if (!$comment) {
             return response()->json(['message' => 'Comment not found'], 404);
@@ -115,4 +118,3 @@ class TaskCommentController extends Controller
         return response()->json(['message' => 'Comment deleted successfully.']);
     }
 }
-?>

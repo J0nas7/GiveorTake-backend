@@ -71,12 +71,13 @@ class TaskController extends Controller
             'Status_ID' => 'required|integer|exists:GT_Backlog_Statuses,Status_ID',
             'Assigned_User_ID' => 'nullable|integer',
             'Task_Due_Date' => 'nullable|date',
+            'Task_Hours_Spent' => 'nullable|integer',
         ]);
 
         $projectId = Backlog::where('Backlog_ID', $validated['Backlog_ID'])->value('Project_ID');
         $backlogs = Backlog::where('Project_ID', $projectId)->get();
         $taskCount = 0;
-        
+
         foreach ($backlogs as $backlog) {
             // Count all tasks including soft deleted ones
             $taskCount += Task::withTrashed()->where('Backlog_ID', $backlog['Backlog_ID'])->count();
@@ -93,7 +94,7 @@ class TaskController extends Controller
 
     /**
      * Get specific task by project key and task key
-     * 
+     *
      * @param string projectKey
      * @param int taskKey
      * @return JsonResponse
@@ -128,7 +129,9 @@ class TaskController extends Controller
             'backlog.project.team.userSeats.user',
             'timeTracks',
             'comments.user',
-            'mediaFiles.user'
+            'comments.childrenComments.user',
+            'mediaFiles.user',
+            'status'
         ])
             ->where('Task_Key', $taskKey)
             // ->where('Project_ID', $project->Project_ID) // Ensure task belongs to the project
@@ -186,6 +189,7 @@ class TaskController extends Controller
             'Task_Description' => 'nullable|string',
             'Status_ID' => 'required|integer|exists:GT_Backlog_Statuses,Status_ID',
             'Task_Due_Date' => 'nullable|date',
+            'Task_Hours_Spent' => 'nullable|integer',
             'Assigned_User_ID' => 'nullable|integer',
         ]);
 
@@ -213,6 +217,7 @@ class TaskController extends Controller
             'tasks.*.Backlog_ID' => 'nullable|integer|exists:GT_Backlogs,Backlog_ID',
             'tasks.*.Status_ID' => 'required|integer|exists:GT_Backlog_Statuses,Status_ID',
             'tasks.*.Task_Due_Date' => 'nullable|date',
+            'tasks.*.Task_Hours_Spent' => 'nullable|integer',
             'tasks.*.Assigned_User_ID' => 'nullable|integer|exists:GT_Users,User_ID',
         ]);
 
@@ -226,6 +231,7 @@ class TaskController extends Controller
                     'Backlog_ID' => $taskData['Backlog_ID'] ?? $task->Backlog_ID,
                     'Status_ID' => $taskData['Status_ID'] ?? $task->Status_ID,
                     'Task_Due_Date' => $taskData['Task_Due_Date'] ?? $task->Task_Due_Date,
+                    'Task_Hours_Spent' => $taskData['Task_Hours_Spent'] ?? $task->Task_Hours_Spent,
                     'Assigned_User_ID' => $taskData['Assigned_User_ID'] ?? $task->Assigned_User_ID,
                 ]);
 

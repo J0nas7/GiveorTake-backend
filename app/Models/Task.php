@@ -22,6 +22,7 @@ class Task extends Model
         'Task_Description',
         'Status_ID',
         'Task_Due_Date',
+        'Task_Hours_Spent',
     ];
 
     protected $dates = ['Task_CreatedAt', 'Task_UpdatedAt', 'Task_DeletedAt'];
