@@ -215,9 +215,8 @@ class TaskController extends Controller
             'tasks' => 'required|array',
             'tasks.*.Task_ID' => 'required|integer|exists:GT_Tasks,Task_ID',
             'tasks.*.Backlog_ID' => 'nullable|integer|exists:GT_Backlogs,Backlog_ID',
-            'tasks.*.Status_ID' => 'required|integer|exists:GT_Backlog_Statuses,Status_ID',
+            'tasks.*.Status_ID' => 'nullable|integer|exists:GT_Backlog_Statuses,Status_ID',
             'tasks.*.Task_Due_Date' => 'nullable|date',
-            'tasks.*.Task_Hours_Spent' => 'nullable|integer',
             'tasks.*.Assigned_User_ID' => 'nullable|integer|exists:GT_Users,User_ID',
         ]);
 
@@ -231,7 +230,6 @@ class TaskController extends Controller
                     'Backlog_ID' => $taskData['Backlog_ID'] ?? $task->Backlog_ID,
                     'Status_ID' => $taskData['Status_ID'] ?? $task->Status_ID,
                     'Task_Due_Date' => $taskData['Task_Due_Date'] ?? $task->Task_Due_Date,
-                    'Task_Hours_Spent' => $taskData['Task_Hours_Spent'] ?? $task->Task_Hours_Spent,
                     'Assigned_User_ID' => $taskData['Assigned_User_ID'] ?? $task->Assigned_User_ID,
                 ]);
 

@@ -1,6 +1,6 @@
 composer create-project laravel/laravel your-project-name
 
-php artisan serve --host=192.168.0.119 --port=8000
+php artisan serve --host=192.168.0.139 --port=8000
 
 
 PHP ARTISAN:
@@ -11,7 +11,7 @@ PHP ARTISAN:
         migrate:fresh --seed
         ## Runs a specific seeder class
         db:seed --class=GTSeeder
-        
+
         make:migration create_name_table
         make:seeder NameSeeder
 
@@ -26,5 +26,5 @@ PHP ARTISAN:
         --fillable="Model_Field1,Model_Field2,Model_CreatedAt,Model_UpdatedAt,Model_DeletedAt"
         --guarded="Model_Field3"
         --timestamps=false
-    
+
     make:controller OrganisationController --resource --api
