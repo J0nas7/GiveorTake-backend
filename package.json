@@ -5,7 +5,7 @@
         "build": "vite build",
         "dev": "vite",
         "clear-cache": "php artisan config:clear && php artisan cache:clear && php artisan route:clear && php artisan view:clear",
-        "deploy": "npm run clear-cache && gcloud config set project giveortake-laravel-backend && gcloud app deploy app.yaml --version=0-1-0 --quiet"
+        "deploy": "gcloud config set project giveortake-laravel-backend && gcloud app deploy app.yaml --version=0-1-0 --quiet"
     },
     "devDependencies": {
         "autoprefixer": "^10.4.20",
