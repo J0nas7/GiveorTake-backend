@@ -150,7 +150,7 @@ class TaskTimeTrackController extends Controller
             'Task_ID' => 'required|integer|exists:GT_Tasks,Task_ID',
             'Backlog_ID' => 'required|integer|exists:GT_Backlogs,Backlog_ID',
             'User_ID' => 'required|integer|exists:GT_Users,User_ID',
-            'Comment_ID' => 'nullable|integer|exists:GT_Task_Comments,Comment_ID',
+            // 'Comment_ID' => 'nullable|integer|exists:GT_Task_Comments,Comment_ID',
             'Time_Tracking_Start_Time' => 'required|date',
             'Time_Tracking_End_Time' => 'nullable|date|after_or_equal:Time_Tracking_Start_Time',
             'Time_Tracking_Duration' => 'nullable|integer|min:1',

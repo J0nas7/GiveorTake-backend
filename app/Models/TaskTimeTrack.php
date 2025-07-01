@@ -17,7 +17,7 @@ class TaskTimeTrack extends Model
         'Backlog_ID',
         'Task_ID',
         'User_ID',
-        'Comment_ID',
+        // 'Comment_ID',
         'Time_Tracking_Start_Time',
         'Time_Tracking_End_Time',
         'Time_Tracking_Duration',
@@ -44,8 +44,8 @@ class TaskTimeTrack extends Model
         return $this->belongsTo(User::class, 'User_ID');
     }
 
-    public function comment()
-    {
-        return $this->belongsTo(TaskComment::class, 'Comment_ID');
-    }
+    // public function comment()
+    // {
+    //     return $this->belongsTo(TaskComment::class, 'Comment_ID');
+    // }
 }

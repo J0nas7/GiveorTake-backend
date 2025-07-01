@@ -17,7 +17,7 @@ class TaskComment extends Model
         'Task_ID',
         'User_ID',
         'Parent_Comment_ID',
-        'Time_Tracking_ID',
+        // 'Time_Tracking_ID',
         'Comment_Text',
     ];
 
@@ -46,8 +46,8 @@ class TaskComment extends Model
         return $this->belongsTo(User::class, 'User_ID');
     }
 
-    public function timeTracking()
-    {
-        return $this->belongsTo(TaskTimeTrack::class, 'Time_Tracking_ID');
-    }
+    // public function timeTracking()
+    // {
+    //     return $this->belongsTo(TaskTimeTrack::class, 'Time_Tracking_ID');
+    // }
 }
