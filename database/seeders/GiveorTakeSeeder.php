@@ -19,7 +19,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-class MyDemoSeeder extends Seeder
+class GiveorTakeSeeder extends Seeder
 {
     /**
      * Run the database seeds.
