@@ -7,12 +7,13 @@ use App\Models\Role;
 use App\Models\TeamUserSeat;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 
 class TeamUserSeatController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth:api', 'check.permission:Manage Team Members'])->only(['store', 'update', 'destroy']);
+        $this->middleware(['auth:api', 'check.permission:Manage Team Members'])->only(['store']);
     }
 
     /**
@@ -272,20 +273,33 @@ class TeamUserSeatController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
-        $validated = $request->validate([
-            'Team_ID' => 'required|exists:GT_Teams,Team_ID', // Ensure team exists
-            'User_ID' => 'required|exists:GT_Users,User_ID', // Ensure user exists
-            'Role_ID' => 'required|exists:GT_Roles,Role_ID', // Ensure the role exists
-            'Seat_Status' => 'nullable|string|max:255', // Optional status
-            'Seat_Role_Description' => 'nullable|string|max:500',
-            'Seat_Permissions' => 'nullable|json',
-        ]);
-
+        $user = Auth::guard('api')->user();
         $seat = TeamUserSeat::find($id);
 
         if (!$seat) {
             return response()->json(['message' => 'Seat not found'], 404); // Return 404 if not found
         }
+
+        $isOwner = $user->User_ID === $seat->User_ID;
+        $canManage = $user->hasPermission('Manage Team Members');
+
+        if (!$canManage && !$isOwner) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Validate based on permission level
+        $validated = $canManage
+            ? $request->validate([
+                'Team_ID' => 'required|exists:GT_Teams,Team_ID',
+                'User_ID' => 'required|exists:GT_Users,User_ID',
+                'Role_ID' => 'required|exists:GT_Roles,Role_ID',
+                'Seat_Status' => 'nullable|string|max:255',
+                'Seat_Role_Description' => 'nullable|string|max:500',
+                'Seat_Permissions' => 'nullable|json',
+            ])
+            : $request->validate([
+                'Seat_Status' => 'required|string|max:255',
+            ]);
 
         $seat->update($validated); // Update seat
         return response()->json($seat); // Return updated seat
@@ -299,10 +313,18 @@ class TeamUserSeatController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
+        $user = Auth::guard('api')->user();
         $seat = TeamUserSeat::find($id);
 
         if (!$seat) {
             return response()->json(['message' => 'Seat not found'], 404); // Return 404 if not found
+        }
+
+        $isOwner = $user->User_ID === $seat->User_ID;
+        $canManage = $user->hasPermission('Manage Team Members');
+
+        if (!$canManage && !$isOwner) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $seat->delete(); // Soft delete the seat assignment

@@ -18,10 +18,11 @@ return [
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
     'allowed_methods' => ['*'],
-        
+
     'allowed_origins' => [
-        'http://localhost:3000', 
+        'http://localhost:3000',
         'http://192.168.50.86:3000',
+        'https://giveortake-nextjs-frontend.ey.r.appspot.com',
     ],
 
     'allowed_origins_patterns' => [],

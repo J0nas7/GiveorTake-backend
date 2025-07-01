@@ -49,7 +49,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function teamUserSeat()
     {
-        return $this->belongsTo(TeamUserSeat::class, 'User_ID');
+        return $this->hasOne(TeamUserSeat::class, 'User_ID');
     }
 
     /**
@@ -63,11 +63,16 @@ class User extends Authenticatable implements JWTSubject
      */
     public function hasPermission(string $permissionKey): bool
     {
+        if (!$this->teamUserSeat || !$this->teamUserSeat->role) {
+            return false;  // No seat or no role means no permission
+        }
+
         foreach ($this->teamUserSeat->role->permissions as $permission) {
             if ($permission->Permission_Key === $permissionKey) {
                 return true;
             }
         }
+
         return false;
     }
 
