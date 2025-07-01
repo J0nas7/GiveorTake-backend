@@ -1,0 +1,21 @@
+runtime: php82  # Use PHP 8.2 as your runtime
+
+entrypoint: serve public/index.php  # Define the entry point
+
+env: standard  # Standard environment for Google App Engine
+
+# Decide when to scale up/down based on traffic
+automatic_scaling:
+  max_instances: 10
+  min_instances: 0
+
+handlers:
+    - url: /(.*\.(gif|png|jpg|css|js))$
+      static_files: public/\1
+      upload: public/.*\.(gif|png|jpg|css|js)$
+
+    # Ensure all files are served
+    - url: /.*
+      secure: always
+      redirect_http_response_code: 301
+      script: auto

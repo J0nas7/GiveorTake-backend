@@ -1,6 +1,6 @@
 composer create-project laravel/laravel your-project-name
 
-php artisan serve --host=192.168.0.139 --port=8000
+php artisan serve --host=10.71.24.57 --port=8000
 
 
 PHP ARTISAN:
@@ -9,8 +9,11 @@ PHP ARTISAN:
         migrate:fresh
         ## Optional: Seed the Database
         migrate:fresh --seed
+
         ## Runs a specific seeder class
-        db:seed --class=GTSeeder
+        db:seed --class=GiveorTakeSeeder
+        db:seed --class=DunderMifflinSeeder
+
 
         make:migration create_name_table
         make:seeder NameSeeder
