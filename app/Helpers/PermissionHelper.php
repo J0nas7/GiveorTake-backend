@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use App\Models\Organisation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
 
@@ -25,6 +26,32 @@ class PermissionHelper
         }
 
         $permission = "{$actionPrefix}.{$resourceId}";
+
+        $userId = $user->User_ID;
+        if (in_array($actionPrefix, ['accessProject', 'manageProject', 'accessBacklog', 'manageBacklog'])) {
+            $relation = null;
+            $column = null;
+
+            if (in_array($actionPrefix, ['accessProject', 'manageProject'])) {
+                $relation = 'teams.projects';
+                $column = 'Project_ID';
+            } elseif (in_array($actionPrefix, ['accessBacklog', 'manageBacklog'])) {
+                $relation = 'teams.projects.backlogs';
+                $column = 'Backlog_ID';
+            }
+
+            if ($relation && $column) {
+                $organisation = Organisation::where('User_ID', $userId)
+                    ->whereHas($relation, function ($query) use ($resourceId, $column) {
+                        $query->where($column, $resourceId);
+                    })
+                    ->exists();
+
+                if ($organisation) {
+                    return null;
+                }
+            }
+        }
 
         if (!$user->hasPermission($permission)) {
             return response()->json([
