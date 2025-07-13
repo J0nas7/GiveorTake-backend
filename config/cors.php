@@ -23,6 +23,7 @@ return [
         'http://localhost:3000',
         'http://192.168.50.86:3000',
         'https://giveortake-nextjs-frontend.ey.r.appspot.com',
+        'https://giveortake.jonas-alexander.dk',
     ],
 
     'allowed_origins_patterns' => [],
