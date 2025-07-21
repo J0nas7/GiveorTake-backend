@@ -21,7 +21,7 @@ class AuthController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register']]);
+        $this->middleware('auth:api', ['except' => ['login', 'forgotPassword', 'resetPassword', 'register']]);
     }
 
     /**
@@ -63,8 +63,38 @@ class AuthController extends Controller
     }
 
     /**
+     * Send password reset token.
+     */
+    public function forgotPassword(Request $request)
+    {
+        $result = $this->sendResetToken($request->all());
+
+        if (isset($result['errors'])) {
+            return response()->json(['errors' => $result['errors']], 400);
+        }
+
+        return response()->json($result, 200);
+    }
+
+    /**
+     * Reset password using token.
+     */
+    public function resetPassword(Request $request)
+    {
+        $result = $this->resetPasswordWithToken($request->all());
+
+        if (isset($result['errors'])) {
+            return response()->json(['errors' => $result['errors']], 400);
+        } elseif (isset($result['error'])) {
+            return response()->json(['error' => $result['error']], 401);
+        }
+
+        return response()->json($result, 200);
+    }
+
+    /**
      * This is useful for mobile apps to get a new token without re-entering credentials
-     * 
+     *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */

@@ -168,6 +168,10 @@ Route::group(['middleware' => ['api']], function () {
         // Login and generate JWT
         Route::post('/auth/login', [AuthController::class, 'login'])->name('login');
 
+        Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+
+        Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+
         // Clone the token for the authenticated user
         Route::post('/auth/clone-token', [AuthController::class, 'cloneToken']);
 
