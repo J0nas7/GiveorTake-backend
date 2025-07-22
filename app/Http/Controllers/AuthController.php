@@ -38,7 +38,7 @@ class AuthController extends Controller
             return response()->json(['errors' => $result['errors']], 400);
         }
 
-        return response()->json($result['user'], 201);
+        return response()->json($result, 201);
     }
 
     /**

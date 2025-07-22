@@ -59,10 +59,18 @@ class User extends Authenticatable implements JWTSubject
      * contain the specified permission key.
      *
      * @param string $permissionKey The key of the permission to check for.
+     * @param int $organisationID
      * @return bool Returns true if the user has the specified permission, false otherwise.
      */
-    public function hasPermission(string $permissionKey): bool
+    public function hasPermission(string $permissionKey, ?int $organisationID): bool
     {
+        if ($organisationID) {
+            $ownsOrganisation = Organisation::find($organisationID)->where('User_ID', $this->User_ID)->get();
+            if ($ownsOrganisation) {
+                return true;
+            }
+        }
+
         if (!$this->teamUserSeat || !$this->teamUserSeat->role) {
             return false;  // No seat or no role means no permission
         }

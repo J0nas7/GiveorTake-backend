@@ -3,12 +3,29 @@
 namespace App\Http\Middleware;
 
 use App\Models\Organisation;
+use App\Models\Team;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
 class CheckPermission
 {
+    protected function resolvePermissionString(Request $request, string $pattern): string
+    {
+        preg_match_all('/\{(\w+)\}/', $pattern, $matches);
+
+        foreach ($matches[1] ?? [] as $param) {
+            $value = $request->route($param) ?? $request->input($param);
+            if (!$value) {
+                abort(response()->json(['message' => "Missing route or input parameter: {$param}"], 400));
+            }
+            $pattern = str_replace("{{$param}}", $value, $pattern);
+        }
+
+        return $pattern;
+    }
+
     /**
      * Handle an incoming request.
      * The $permissionPattern supports placeholders like {id} to be replaced with route parameters.
@@ -16,9 +33,10 @@ class CheckPermission
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
      * @param  string  $permissionPattern
+     * @param  string  $context
      * @return mixed
      */
-    public function handle(Request $request, Closure $next, string $permissionPattern)
+    public function handle(Request $request, Closure $next, string $permissionPattern, string $context)
     {
         /** @var \App\Models\User|null $user */
         $user = Auth::guard('api')->user();
@@ -27,44 +45,42 @@ class CheckPermission
             return response()->json(['message' => 'Unauthorized - not logged in'], 401);
         }
 
-        // Replace placeholders in $permissionPattern with route parameters
-        preg_match_all('/\{(\w+)\}/', $permissionPattern, $matches);
+        // 1. Check if the request contains a contextual ID
+        $organisationId = $request->route('organisationId');
+        $teamId = $request->input('Team_ID') ?? $request->route('team_id') ?? $request->route('teamId');
 
-        $permission = $permissionPattern;
-        if (!empty($matches[1])) {
-            foreach ($matches[1] as $param) {
-                $value = $request->route($param) ?? $request->input($param);
-                if (!$value) {
-                    // If param not found, reject request
-                    return response()->json(['message' => "Missing route or input parameter: {$param}"], 400);
-                }
-                $permission = str_replace("{{$param}}", $value, $permission);
+        if ($organisationId) {
+            try {
+                $organisation = Organisation::where('Organisation_ID', $organisationId)
+                    ->where('User_ID', $user->User_ID)
+                    ->firstOrFail();
+
+                return $next($request);
+            } catch (\Exception $e) {
+                // ownership not verified — fall back to permission pattern check
+            }
+        } else if ($teamId) {
+            try {
+                $team = Team::with('organisation')
+                    ->where('Team_ID', $teamId)
+                    ->whereHas('organisation', function ($query) use ($user) {
+                        $query->where('User_ID', $user->User_ID);
+                    })
+                    ->firstOrFail();
+
+                return $next($request);
+            } catch (\Exception $e) {
+                // ownership not verified — fall back to permission pattern check
             }
         }
+
+        $permission = $this->resolvePermissionString($request, $permissionPattern);
 
         // Optionally, allow some global admin override permission key, e.g. "Modify Team Settings"
         $adminOverridePermission = "Modify Team Settings";
 
-        // ✅ 1. Check role-based permission or override
-        if ($user->hasPermission($permission) || $user->hasPermission($adminOverridePermission)) {
-            return $next($request);
-        }
-
-        /*
-        // ✅ 2. Check organisation ownership (if Organisation_ID exists in route or input)
-        $organisationId = $request->route('Organisation_ID') ?? $request->input('Organisation_ID');
-
-        if ($organisationId) {
-            $organisation = Organisation::find($organisationId);
-            if ($organisation && $organisation->User_ID === $user->User_ID) {
-                return $next($request);
-            }
-        }*/
-
-        // ✅ 2. Global organisation ownership check (owns *any* Organisation) // TODO
-        $ownsOrganisation = Organisation::where('User_ID', $user->User_ID)->exists();
-
-        if ($ownsOrganisation) {
+        // ✅ 2. Check role-based permission or override
+        if ($user->hasPermission($permission, 0) || $user->hasPermission($adminOverridePermission, 0)) {
             return $next($request);
         }
 

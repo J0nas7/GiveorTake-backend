@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\TeamUserSeat;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -13,7 +14,8 @@ class TeamUserSeatController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth:api', 'check.permission:Manage Team Members'])->only(['store']);
+        $this->middleware(['auth:api', 'check.permission:Manage Team Members,TeamUserSeat'])
+            ->only(['store']);
     }
 
     /**
@@ -273,15 +275,16 @@ class TeamUserSeatController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
+        /** @var \App\Models\User|null $user */
         $user = Auth::guard('api')->user();
-        $seat = TeamUserSeat::find($id);
+        $seat = TeamUserSeat::find($id)->with(['team.organisation']);
 
         if (!$seat) {
             return response()->json(['message' => 'Seat not found'], 404); // Return 404 if not found
         }
 
         $isOwner = $user->User_ID === $seat->User_ID;
-        $canManage = $user->hasPermission('Manage Team Members');
+        $canManage = $user->hasPermission('Manage Team Members', $seat->team->organisation->Organisation_ID);
 
         if (!$canManage && !$isOwner) {
             return response()->json(['message' => 'Unauthorized'], 403);
@@ -313,18 +316,19 @@ class TeamUserSeatController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
+        /** @var \App\Models\User|null $user */
         $user = Auth::guard('api')->user();
-        $seat = TeamUserSeat::find($id);
+        $seat = TeamUserSeat::with(['team.organisation'])->find($id);
 
         if (!$seat) {
             return response()->json(['message' => 'Seat not found'], 404); // Return 404 if not found
         }
 
         $isOwner = $user->User_ID === $seat->User_ID;
-        $canManage = $user->hasPermission('Manage Team Members');
+        $canManage = $user->hasPermission('Manage Team Members', $seat->team->organisation->Organisation_ID);
 
         if (!$canManage && !$isOwner) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return response()->json(['message' => 'Unauthorized (Missing permissions)'], 403);
         }
 
         $seat->delete(); // Soft delete the seat assignment

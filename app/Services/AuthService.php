@@ -22,11 +22,11 @@ trait AuthService
     {
         // Validate the input fields
         $validator = Validator::make($data, [
-            'User_Email'       => 'required|email|unique:GT_Users,User_Email',
-            'User_Password'    => 'required|min:6',
-            'User_Status'      => 'required|integer',
-            'User_FirstName'   => 'required|string|max:100', // Validate first name
-            'User_Surname'     => 'required|string|max:100', // Validate surname
+            'acceptTerms'       => 'required|accepted', // accepted: allows values like yes, on, 1, or true.
+            'userEmail'       => 'required|email|unique:GT_Users,User_Email',
+            'userPassword'    => 'required|min:6|confirmed',
+            'userFirstname'   => 'required|string|max:100', // Validate first name
+            'userSurname'     => 'required|string|max:100', // Validate surname
             'User_ImageSrc'    => 'nullable|string|max:255', // Optional image source
         ]);
 
@@ -37,16 +37,15 @@ trait AuthService
 
         // Create a new user with validated data
         $user = User::create([
-            'User_Email'       => $data['User_Email'],
-            'User_Password'    => Hash::make($data['User_Password']),
-            'User_Status'      => $data['User_Status'],
-            'User_FirstName'   => $data['User_FirstName'], // Include first name
-            'User_Surname'     => $data['User_Surname'],   // Include surname
+            'User_Email'       => $data['userEmail'],
+            'User_Password'    => Hash::make($data['userPassword']),
+            'User_Status'      => 1,
+            'User_FirstName'   => $data['userFirstname'], // Include first name
+            'User_Surname'     => $data['userSurname'],   // Include surname
             'User_ImageSrc'    => $data['User_ImageSrc'] ?? null, // Optional field
         ]);
 
-        // Return the created user
-        return ['user' => $user];
+        return ['success' => true, 'message' => 'User was created.'];
     }
 
     /**
