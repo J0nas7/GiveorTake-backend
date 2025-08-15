@@ -21,8 +21,9 @@ return [
 
     'allowed_origins' => [
         'http://localhost:3000',
-        'http://192.168.50.86:3000',
+        'http://192.168.50.132:3000',
         'https://giveortake-nextjs-frontend.ey.r.appspot.com',
+        'https://nsgiveortakenextjsfr83wtqlnv-container-giveortake-nextjs-fronte.functions.fnc.fr-par.scw.cloud',
         'https://giveortake.jonas-alexander.dk',
     ],
 

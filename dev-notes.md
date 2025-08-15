@@ -1,6 +1,21 @@
 composer create-project laravel/laravel your-project-name
 
-php artisan serve --host=192.168.0.139 --port=8000
+php artisan serve --host=192.168.50.132 --port=8000
+
+
+DOCKER:
+docker login rg.fr-par.scw.cloud/namespace-giveortake-laravel-backend -u nologin --password-stdin <<< "$SCW_SECRET_KEY"
+
+## Build Docker image targeting amd64:
+docker build --platform linux/amd64 -t giveortake-laravel-backend .
+
+## Running locally
+
+## Re-tag and push:
+docker tag giveortake-laravel-backend rg.fr-par.scw.cloud/namespace-giveortake-laravel-backend/giveortake-laravel-backend:12-aug-2025__12.20.00
+
+docker push rg.fr-par.scw.cloud/namespace-giveortake-laravel-backend/giveortake-laravel-backend:12-aug-2025__12.20.00
+
 
 
 PHP ARTISAN:
