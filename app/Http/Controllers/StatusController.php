@@ -107,7 +107,7 @@ class StatusController extends BaseController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function moveOrder(int $id, Request $request): JsonResponse
+    public function moveOrder(int $statusId, Request $request): JsonResponse
     {
         $direction = $request->input('direction');
 
@@ -117,7 +117,7 @@ class StatusController extends BaseController
 
         // Fetch the current status
         /** @var \App\Models\Status $status */
-        $status = \App\Models\Status::find($id);
+        $status = \App\Models\Status::find($statusId);
 
         if (!$status) {
             return response()->json(['message' => 'Status not found'], 404);
@@ -216,10 +216,10 @@ class StatusController extends BaseController
      * @param  int  $id  The ID of the status to assign as default.
      * @return \Illuminate\Http\JsonResponse
      */
-    public function assignDefault(int $id): JsonResponse
+    public function assignDefault(int $statusId): JsonResponse
     {
         /** @var \App\Models\Status $status */
-        $status = \App\Models\Status::find($id);
+        $status = \App\Models\Status::find($statusId);
 
         if (!$status) {
             return response()->json(['message' => 'Status not found'], 404);
@@ -268,10 +268,10 @@ class StatusController extends BaseController
      * @param  int  $id  The ID of the status to assign as closed.
      * @return \Illuminate\Http\JsonResponse
      */
-    public function assignClosed(int $id): JsonResponse
+    public function assignClosed(int $statusId): JsonResponse
     {
         /** @var \App\Models\Status $status */
-        $status = \App\Models\Status::find($id);
+        $status = \App\Models\Status::find($statusId);
 
         if (!$status) {
             return response()->json(['message' => 'Status not found'], 404);

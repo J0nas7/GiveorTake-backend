@@ -16,6 +16,7 @@ use App\Http\Controllers\TeamUserSeatController;
 use App\Http\Controllers\UtilityController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\UserOnly;
+use Illuminate\Support\Facades\App;
 
 // Protected UserOnly Routes
 Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
@@ -51,7 +52,7 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
      * This single line of code handles all these CRUD routes: */
     Route::apiResource('team-user-seats', TeamUserSeatController::class);
     // Custom route to find a seat by team ID and user ID
-    Route::get('team-user-seats/find/{team_id}/{user_id}', [TeamUserSeatController::class, 'findByTeamAndUser']);
+    Route::get('team-user-seats/find/{teamId}/{user_id}', [TeamUserSeatController::class, 'findByTeamAndUser']);
     // Custom route to find all teams by user ID
     Route::get('team-user-seats/teams-by-user/{user_id}', [TeamUserSeatController::class, 'findTeamsByUserID']);
     // Custom route to get all user seats by team ID
@@ -95,11 +96,11 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
      * This single line of code handles all these CRUD routes: */
     Route::apiResource('status', StatusController::class);
     // Adjust the Status_Order of a given Status by moving it up or down within its backlog.
-    Route::post('/statuses/{id}/move-order', [StatusController::class, 'moveOrder']);
+    Route::post('/statuses/{statusId}/move-order', [StatusController::class, 'moveOrder']);
     // Assign the given status as the default for its backlog.
-    Route::post('statuses/{id}/assign-default', [StatusController::class, 'assignDefault']);
+    Route::post('statuses/{statusId}/assign-default', [StatusController::class, 'assignDefault']);
     // Assign the given status as the closed for its backlog.
-    Route::post('statuses/{id}/assign-closed', [StatusController::class, 'assignClosed']);
+    Route::post('statuses/{statusId}/assign-closed', [StatusController::class, 'assignClosed']);
 
 
 

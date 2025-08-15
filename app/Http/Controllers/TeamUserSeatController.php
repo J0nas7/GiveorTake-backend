@@ -14,21 +14,21 @@ class TeamUserSeatController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth:api', 'check.permission:Manage Team Members,TeamUserSeat'])
+        $this->middleware(['auth:api', 'check.permission:Manage Team Members'])
             ->only(['store']);
     }
 
     /**
      * Find a seat based on Team ID and User ID.
      *
-     * @param int $team_id
+     * @param int $teamId
      * @param int $user_id
      * @return JsonResponse
      */
-    public function findByTeamAndUser(int $team_id, int $user_id): JsonResponse
+    public function findByTeamAndUser(int $teamId, int $user_id): JsonResponse
     {
         // Search for the seat based on Team ID and User ID
-        $seat = TeamUserSeat::where('Team_ID', $team_id)
+        $seat = TeamUserSeat::where('Team_ID', $teamId)
             ->where('User_ID', $user_id)
             ->first(); // Get the first matching seat (there should be one or none)
 
@@ -66,7 +66,7 @@ class TeamUserSeatController extends Controller
     /**
      * Get all user seats for a specific Team ID.
      *
-     * @param int $team_id
+     * @param int $teamId
      * @return JsonResponse
      */
     public function getTeamUserSeatsByTeamId(int $teamId): JsonResponse
