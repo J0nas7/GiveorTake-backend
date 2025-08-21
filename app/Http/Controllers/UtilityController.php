@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\TaskComment;
+use App\Models\TaskMediaFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
@@ -58,42 +60,78 @@ class UtilityController extends Controller
             }
         }
 
-        // Get all table names in SQLite
-        $tables = DB::select("SELECT name FROM sqlite_master WHERE type='table'");
+        $driver = DB::getDriverName();
+
+        // Get all table names in database
+        if ($driver === 'sqlite') {
+            $tables = DB::select("SELECT name FROM sqlite_master WHERE type='table'");
+        } elseif ($driver === 'pgsql') {
+            $tables = DB::select("SELECT table_name AS name FROM information_schema.tables WHERE table_schema = 'public'");
+        } else {
+            return response()->json(['error' => 'Unsupported database driver.'], 500);
+        }
 
         foreach ($tables as $table) {
             $tableName = $table->name;
 
-            // Get columns of the current table
-            $columns = DB::select("PRAGMA table_info($tableName)");
+            // Get columns of the current table, per driver
+            if ($driver === 'sqlite') {
+                $columns = DB::select("PRAGMA table_info($tableName)");
+                $columnNames = collect($columns)->pluck('name');
+            } elseif ($driver === 'pgsql') {
+                $columns = DB::select("SELECT column_name FROM information_schema.columns WHERE table_name = ?", [$tableName]);
+                $columnNames = collect($columns)->pluck('column_name');
+            }
+
+            // Skip Laravel’s migration tables if necessary
+            if (in_array($tableName, ['migrations', 'password_resets', 'failed_jobs'])) {
+                continue;
+            }
+            // Skip tables that should not be searched
+            if (in_array($tableName, [
+                'GT_Users',
+                'GT_Backlog_Statuses',
+                'GT_Permissions',
+                'GT_Roles',
+                'GT_Role_Permissions',
+                'GT_Team_User_Seats',
+                'GT_Task_Time_Trackings',
+                'GT_Activity_Logs'
+            ])) {
+                continue;
+            }
 
             // Check if User_ID exists in the columns
-            $hasUserIdColumn = collect($columns)->contains(function ($column) {
-                return $column->name === 'User_ID';
-            });
+            $hasUserIdColumn = $columnNames->contains('User_ID');
+            // $hasUserIdColumn = collect($columnNames)->contains(function ($column) {
+            //     return $column->name === 'User_ID';
+            // });
 
             // Check if the table is 'GT_Tasks', so we can include 'with' for eager loading
             if ($tableName === 'GT_Tasks') {
-                // Use 'with' to eager load the 'project' relationship when searching in the 'GT_Tasks' table
-                $query = Task::with('project');
+                // Use 'with' to eager load the 'backlog.project' and the 'status' relationship when searching in the 'GT_Tasks' table
+                $query = Task::with('backlog.project', 'status', 'user');
+            } else if ($tableName === 'GT_Task_Media_Files') {
+                $query = TaskMediaFile::with('task.backlog.project');
+            } else if ($tableName === 'GT_Task_Comments') {
+                $query = TaskComment::with('task.backlog.project');
             } else {
                 // Start building the query to search through columns
                 $query = DB::table($tableName);
                 $first = true;
             }
 
-
-            foreach ($columns as $column) {
-                // Skip primary keys or unwanted columns (Optional: Add logic to exclude certain columns)
-                if ($column->name === 'User_ID') {
+            foreach ($columnNames as $column) {
+                // Skip primary keys or unwanted columns
+                if ($column === 'User_ID') {
                     continue; // Skip User_ID for search
                 }
 
                 if ($first) {
-                    $query->where($column->name, 'LIKE', "%$searchString%");
+                    $query->where($column, 'LIKE', "%$searchString%");
                     $first = false;
                 } else {
-                    $query->orWhere($column->name, 'LIKE', "%$searchString%");
+                    $query->orWhere($column, 'LIKE', "%$searchString%");
                 }
             }
 

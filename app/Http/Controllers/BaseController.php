@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Redis;
 
 abstract class BaseController extends Controller
 {
@@ -30,6 +31,24 @@ abstract class BaseController extends Controller
      */
     abstract protected function rules(): array;
 
+    // Hook called after a resource is created.
+    protected function afterStore(Model $resource): void
+    {
+        // Default: do nothing
+    }
+
+    // Hook called after a resource is updated.
+    protected function afterUpdate(Model $resource): void
+    {
+        // Default: do nothing
+    }
+
+    // Hook called after a resource is deleted.
+    protected function afterDestroy(Model $resource): void
+    {
+        // Default: do nothing
+    }
+
     /**
      * Retrieve a listing of the resource with optional eager loading.
      *
@@ -37,8 +56,21 @@ abstract class BaseController extends Controller
      */
     public function index(): JsonResponse
     {
+        // $cacheKey = 'model:' . Str::snake(class_basename($this->modelClass)) . ':all';
+
+        // // Try to get data from Redis
+        // $cachedResources = Redis::get($cacheKey);
+
+        // if ($cachedResources) {
+        //     return response()->json(json_decode($cachedResources));
+        // }
+
+        // If not in cache, fetch from DB
         // Retrieve all records of the model with defined eager-loaded relationships
         $resources = $this->modelClass::with($this->with)->get();
+
+        // Store in Redis for 1 hour (3600 seconds)
+        // Redis::setex($cacheKey, 3600, $resources->toJson());
 
         // Return the records as a JSON response
         return response()->json($resources);
@@ -58,6 +90,11 @@ abstract class BaseController extends Controller
         // Create a new resource record in the database
         $resource = $this->modelClass::create($validated);
 
+        // Invalidate the index cache
+        // Redis::del('model:' . Str::snake(class_basename($this->modelClass)) . ':all');
+
+        $this->afterStore($resource);
+
         // Return the newly created resource with a 201 (Created) status
         return response()->json($resource, 201);
     }
@@ -70,6 +107,14 @@ abstract class BaseController extends Controller
      */
     public function show(int $id): JsonResponse
     {
+        // $cacheKey = 'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $id;
+
+        // $cachedResource = Redis::get($cacheKey);
+
+        // if ($cachedResource) {
+        //     return response()->json(json_decode($cachedResource));
+        // }
+
         // Find the resource by ID and eager load defined relationships
         $resource = $this->modelClass::with($this->with)->find($id);
 
@@ -77,6 +122,8 @@ abstract class BaseController extends Controller
         if (!$resource) {
             return response()->json(['message' => Str::singular(class_basename($this->modelClass)) . ' not found'], 404);
         }
+
+        // Redis::setex($cacheKey, 3600, $resource->toJson());
 
         // Return the found resource as a JSON response
         return response()->json($resource);
@@ -105,6 +152,14 @@ abstract class BaseController extends Controller
         // Update the resource with validated data
         $resource->update($validated);
 
+        // Invalidate both the index and the specific resource cache
+        // Redis::del([
+        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
+        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $id
+        // ]);
+
+        $this->afterUpdate($resource);
+
         // Return the updated resource as a JSON response
         return response()->json($resource);
     }
@@ -128,8 +183,15 @@ abstract class BaseController extends Controller
         // Delete the resource from the database
         $resource->delete();
 
+        // Invalidate both the index and the specific resource cache
+        // Redis::del([
+        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
+        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $id
+        // ]);
+
+        $this->afterDestroy($resource);
+
         // Return a success message as a JSON response
         return response()->json(['message' => Str::singular(class_basename($this->modelClass)) . ' deleted successfully.']);
     }
 }
-?>

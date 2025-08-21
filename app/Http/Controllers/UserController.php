@@ -2,122 +2,82 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 
-class UserController extends Controller
+class UserController extends BaseController
 {
     use UserService;
 
     /**
-     * Get user by email.
+     * The Eloquent model class this controller works with.
      *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @var string
+     */
+    protected string $modelClass = User::class;
+
+    /**
+     * Optional relationships to eager load.
+     *
+     * @var array
+     */
+    protected array $with = [];
+
+    /**
+     * Validation rules for create/update operations.
+     *
+     * @return array
+     */
+    protected function rules(): array
+    {
+        return [
+            'User_Status'    => 'required|integer',
+            'User_Email'     => 'required|email|unique:GT_Users,User_Email',
+            'User_Password'  => 'required|min:6',
+            'User_FirstName' => 'required|string|max:100',
+            'User_Surname'   => 'required|string|max:100',
+            'User_ImageSrc'  => 'nullable|string|max:255',
+        ];
+    }
+
+    /**
+     * Hook after creating a user.
+     * Hash the password before saving.
+     */
+    protected function afterStore($user): void
+    {
+        if ($user->User_Password) {
+            $user->update(['User_Password' => $this->hashPassword($user->User_Password)]);
+        }
+    }
+
+    /**
+     * Hook after updating a user.
+     * Hash password if it's being updated.
+     */
+    protected function afterUpdate($user): void
+    {
+        if (request()->filled('User_Password')) {
+            $user->update(['User_Password' => $this->hashPassword(request()->input('User_Password'))]);
+        }
+    }
+
+    /**
+     * Custom endpoint: get user by email.
      */
     public function getUserByEmail(Request $request)
     {
         $request->validate([
-            'email' => 'required|email'
+            'email' => 'required|email',
         ]);
 
         $user = $this->findUserByEmail($request->input('email'));
-        
+
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-        
-        return response()->json($user, 200);
-    }
-
-    //// The rest of this UserController is RESTful API methods ////
-
-    /**
-     * Get all users.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function index()
-    {
-        $users = $this->getAllUsers();
-        return response()->json($users, 200);
-    }
-
-    /**
-     * Get a single user by ID.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function show($id)
-    {
-        $user = $this->findUserById($id);
-
-        if (!$user) {
-            return response()->json(['error' => 'User not found'], 404);
-        }
 
         return response()->json($user, 200);
-    }
-
-    /**
-     * Create a new user.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function store(Request $request)
-    {
-        $result = $this->createUser($request->all());
-
-        if (isset($result['errors'])) {
-            return response()->json(['errors' => $result['errors']], 400);
-        }
-
-        return response()->json($result['user'], 201);
-    }
-
-    /**
-     * Update an existing user.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function update(Request $request, $id)
-    {
-        $user = $this->findUserById($id);
-
-        if (!$user) {
-            return response()->json(['error' => 'User not found'], 404);
-        }
-
-        $result = $this->updateUser($request->all(), $user);
-
-        if (isset($result['errors'])) {
-            return response()->json(['errors' => $result['errors']], 400);
-        }
-
-        return response()->json($result['user'], 200);
-    }
-
-    /**
-     * Delete a user.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function destroy($id)
-    {
-        $user = $this->findUserById($id);
-
-        if (!$user) {
-            return response()->json(['error' => 'User not found'], 404);
-        }
-
-        $this->deleteUser($user);
-
-        return response()->json(['message' => 'User deleted'], 200);
     }
 }
-?>

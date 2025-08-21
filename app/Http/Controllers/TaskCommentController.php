@@ -5,10 +5,70 @@ namespace App\Http\Controllers;
 use App\Models\TaskComment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
 
-class TaskCommentController extends Controller
+class TaskCommentController extends BaseController
 {
+    /**
+     * The model class associated with this controller.
+     *
+     * @var string
+     */
+    protected string $modelClass = TaskComment::class;
+
+    /**
+     * The relationships to eager load when fetching properties.
+     *
+     * @var array
+     */
+    protected array $with = [
+        'childrenComments',
+        'parentComment',
+        'user',
+    ];
+
+    /**
+     * Validation rules for task comments.
+     *
+     * @return array
+     */
+    protected function rules(): array
+    {
+        return [
+            'Task_ID' => 'required|integer|exists:GT_Tasks,Task_ID',
+            'User_ID' => 'required|integer|exists:GT_Users,User_ID',
+            'Comment_Text' => 'required|string',
+            'Parent_Comment_ID' => 'nullable|integer|exists:GT_Task_Comments,Comment_ID',
+        ];
+    }
+
+    /**
+     * Clear the Redis cache for a given task.
+     *
+     * @param int $taskId
+     * @return void
+     */
+    private function clearTaskCache(int $taskId): void
+    {
+        // Redis::del("model:task:{$taskId}");
+    }
+
+    protected function afterStore($comment): void
+    {
+        $this->clearTaskCache($comment->Task_ID);
+    }
+
+    protected function afterUpdate($comment): void
+    {
+        $this->clearTaskCache($comment->Task_ID);
+    }
+
+    protected function afterDestroy($comment): void
+    {
+        $this->clearTaskCache($comment->Task_ID);
+    }
+
     /**
      * Get comments by Task ID.
      *
@@ -26,95 +86,5 @@ class TaskCommentController extends Controller
         }
 
         return response()->json($comments);
-    }
-
-    //// The rest of this TaskCommentController is RESTful API methods ////
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return JsonResponse
-     */
-    public function index(): JsonResponse
-    {
-        $comments = TaskComment::all();
-        return response()->json($comments);
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function store(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'Task_ID' => 'required|integer|exists:GT_Tasks,Task_ID',
-            'User_ID' => 'required|integer|exists:GT_Users,User_ID',
-            'Comment_Text' => 'required|string',
-            'Parent_Comment_ID' => 'nullable|integer|exists:GT_Task_Comments,Comment_ID',
-        ]);
-
-        $comment = TaskComment::create($validated);
-        return response()->json($comment, 201);
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param int $id
-     * @return JsonResponse
-     */
-    public function show(int $id): JsonResponse
-    {
-        $comment = TaskComment::with(['childrenComments', 'user'])->find($id);
-
-        if (!$comment) {
-            return response()->json(['message' => 'Comment not found'], 404);
-        }
-
-        return response()->json($comment);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
-     */
-    public function update(Request $request, int $id): JsonResponse
-    {
-        $validated = $request->validate([
-            'Comment_Text' => 'required|string',
-        ]);
-
-        $comment = TaskComment::find($id);
-
-        if (!$comment) {
-            return response()->json(['message' => 'Comment not found'], 404);
-        }
-
-        $comment->update($validated);
-        return response()->json($comment);
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param int $id
-     * @return JsonResponse
-     */
-    public function destroy(int $id): JsonResponse
-    {
-        $comment = TaskComment::find($id);
-
-        if (!$comment) {
-            return response()->json(['message' => 'Comment not found'], 404);
-        }
-
-        $comment->delete();
-        return response()->json(['message' => 'Comment deleted successfully.']);
     }
 }

@@ -3,16 +3,55 @@
 namespace App\Http\Controllers;
 
 use App\Models\Organisation;
-use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Redis;
 
-class OrganisationController extends Controller
+class OrganisationController extends BaseController
 {
     public function __construct()
     {
         $this->middleware(['auth:api', 'check.permission:Modify Organisation Settings'])
             ->only(['update', 'destroy']);
+    }
+
+    /**
+     * The model class associated with this controller.
+     *
+     * @var string
+     */
+    protected string $modelClass = Organisation::class;
+
+    /**
+     * The relationships to eager load when fetching organisations.
+     *
+     * @var array
+     */
+    protected array $with = [
+        'teams.userSeats'
+    ];
+
+    /**
+     * Define the validation rules for organisations.
+     *
+     * @return array
+     */
+    protected function rules(): array
+    {
+        return [
+            'User_ID' => 'required|integer|exists:users,User_ID', // or the correct users table/column
+            'Organisation_Name' => 'required|string|max:255',
+            'Organisation_Description' => 'nullable|string',
+        ];
+    }
+
+    protected function afterUpdate($organisation): void
+    {
+        // Redis::del("organisations:user:{$organisation->User_ID}");
+    }
+
+    protected function afterDestroy($organisation): void
+    {
+        // Redis::del("organisations:user:{$organisation->User_ID}");
     }
 
     /**
@@ -23,6 +62,14 @@ class OrganisationController extends Controller
      */
     public function getOrganisationsByUser(int $userId): JsonResponse
     {
+        // $cacheKey = "organisations:user:{$userId}";
+
+        // // Try to get from Redis
+        // $cachedData = Redis::get($cacheKey);
+        // if ($cachedData) {
+        //     return response()->json(json_decode($cachedData, true));
+        // }
+
         // Get organisations where the user is the owner or the user is a member of a team within the organisation
         $organisations = Organisation::with(['teams.projects', 'teams.userSeats'])
             ->where('User_ID', $userId)  // Check if the user is the owner of the organisation
@@ -35,97 +82,9 @@ class OrganisationController extends Controller
             return response()->json(['message' => 'No organisations found for this user'], 404);
         }
 
+        // Cache in Redis for 1 hour
+        // Redis::setex($cacheKey, 3600, $organisations->toJson());
+
         return response()->json($organisations);
-    }
-
-    //// The rest of this OrganisationController is RESTful API methods ////
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return JsonResponse
-     */
-    public function index(): JsonResponse
-    {
-        $organisations = Organisation::with('teams.userSeats')->get(); // Eager load teams and userSeat
-        return response()->json($organisations); // Return organisations as JSON
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function store(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'User_ID' => 'required|integer',
-            'Organisation_Name' => 'required|string|max:255',
-            'Organisation_Description' => 'nullable|string',
-        ]);
-
-        $organisation = Organisation::create($validated); // Store the new organisation
-        return response()->json($organisation, 201); // Return created organisation as JSON with HTTP status 201
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param int $id
-     * @return JsonResponse
-     */
-    public function show(int $id): JsonResponse
-    {
-        $organisation = Organisation::with('teams.userSeats')->find($id); // Eager load teams and userSeat
-
-        if (!$organisation) {
-            return response()->json(['message' => 'Organisation not found'], 404); // Return 404 if not found
-        }
-
-        return response()->json($organisation); // Return the organisation as JSON
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
-     */
-    public function update(Request $request, int $id): JsonResponse
-    {
-        $validated = $request->validate([
-            'User_ID' => 'required|integer',
-            'Organisation_Name' => 'required|string|max:255',
-            'Organisation_Description' => 'nullable|string',
-        ]);
-
-        $organisation = Organisation::find($id);
-
-        if (!$organisation) {
-            return response()->json(['message' => 'Organisation not found'], 404); // Return 404 if not found
-        }
-
-        $organisation->update($validated); // Update the organisation
-        return response()->json($organisation); // Return the updated organisation as JSON
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param int $id
-     * @return JsonResponse
-     */
-    public function destroy(int $id): JsonResponse
-    {
-        $organisation = Organisation::find($id);
-
-        if (!$organisation) {
-            return response()->json(['message' => 'Organisation not found'], 404); // Return 404 if not found
-        }
-
-        $organisation->delete(); // Soft delete the organisation
-        return response()->json(['message' => 'Organisation deleted successfully.']); // Return success message
     }
 }

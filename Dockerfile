@@ -6,6 +6,10 @@ RUN apt-get update && apt-get install -y \
     git unzip libzip-dev libpng-dev libonig-dev libxml2-dev libpq-dev \
     && docker-php-ext-install pdo pdo_mysql pdo_pgsql zip gd
 
+# Install Redis extension
+RUN pecl install redis \
+    && docker-php-ext-enable redis
+
 # Enable Apache mod_rewrite for Laravel pretty URLs
 RUN a2enmod rewrite
 

@@ -4,16 +4,74 @@ namespace App\Http\Controllers;
 
 use App\Models\Team;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Redis;
 
-class TeamController extends Controller
+class TeamController extends BaseController
 {
     public function __construct()
     {
         $this->middleware(['auth:api', 'check.permission:Modify Organisation Settings'])->only('store');
         $this->middleware(['auth:api', 'check.permission:Modify Team Settings'])->only(['update', 'destroy']);
     }
+
+    /**
+     * The model class associated with this controller.
+     *
+     * @var string
+     */
+    protected string $modelClass = Team::class;
+
+    /**
+     * The relationships to eager load when fetching teams.
+     *
+     * @var array
+     */
+    protected array $with = [
+        'organisation',
+        'projects.backlogs'
+    ];
+
+    /**
+     * Define the validation rules for teams.
+     *
+     * @return array
+     */
+    protected function rules(): array
+    {
+        return [
+            'Organisation_ID' => 'required|integer|exists:organisations,Organisation_ID',
+            'Team_Name' => 'required|string|max:255',
+            'Team_Description' => 'nullable|string',
+        ];
+    }
+
+    /**
+     * Optional: Actions after update.
+     */
+    protected function afterUpdate($team): void
+    {
+        // Invalidate cache if using Redis for caching teams
+        // Redis::del([
+        //     "teams:organisation:{$team->Organisation_ID}",
+        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
+        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $team->Team_ID,
+        // ]);
+    }
+
+    /**
+     * Optional: Actions after destroy.
+     */
+    protected function afterDestroy($team): void
+    {
+        Redis::del([
+            "teams:organisation:{$team->Organisation_ID}",
+            'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
+            'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $team->Team_ID,
+        ]);
+    }
+
     /**
      * Display a listing of teams based on Organisation ID.
      *
@@ -22,103 +80,25 @@ class TeamController extends Controller
      */
     public function getTeamsByOrganisation(int $organisationId): JsonResponse
     {
-        $teams = Team::where('Organisation_ID', $organisationId)->get();
+        // $cacheKey = "teams:organisation:{$organisationId}";
+
+        // // Try to get from Redis
+        // $cachedData = Redis::get($cacheKey);
+        // if ($cachedData) {
+        //     return response()->json(json_decode($cachedData, true));
+        // }
+
+        $teams = Team::with($this->with)
+            ->where('Organisation_ID', $organisationId)
+            ->get();
 
         if ($teams->isEmpty()) {
             return response()->json(['message' => 'No teams found for this organisation'], 404);
         }
 
+        // Cache in Redis for 1 hour
+        // Redis::setex($cacheKey, 3600, $teams->toJson());
+
         return response()->json($teams);
-    }
-
-    //// The rest of this TeamController is RESTful API methods ////
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return JsonResponse
-     */
-    public function index(): JsonResponse
-    {
-        $teams = Team::with('organisation', 'projects.backlogs')->get(); // Eager load organisation and projects
-        return response()->json($teams); // Return teams as JSON
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function store(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'Organisation_ID' => 'required|integer',
-            'Team_Name' => 'required|string|max:255',
-            'Team_Description' => 'nullable|string',
-        ]);
-
-        $team = Team::create($validated); // Store the new team
-        return response()->json($team, 201); // Return created team as JSON with HTTP status 201
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param int $id
-     * @return JsonResponse
-     */
-    public function show(int $id): JsonResponse
-    {
-        $team = Team::with('organisation', 'projects.backlogs')->find($id); // Eager load organisation and projects
-
-        if (!$team) {
-            return response()->json(['message' => 'Team not found'], 404); // Return 404 if not found
-        }
-
-        return response()->json($team); // Return the team as JSON
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
-     */
-    public function update(Request $request, int $id): JsonResponse
-    {
-        $validated = $request->validate([
-            'Organisation_ID' => 'required|integer',
-            'Team_Name' => 'required|string|max:255',
-            'Team_Description' => 'nullable|string',
-        ]);
-
-        $team = Team::find($id);
-
-        if (!$team) {
-            return response()->json(['message' => 'Team not found'], 404); // Return 404 if not found
-        }
-
-        $team->update($validated); // Update the team
-        return response()->json($team); // Return the updated team as JSON
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param int $id
-     * @return JsonResponse
-     */
-    public function destroy(int $id): JsonResponse
-    {
-        $team = Team::find($id);
-
-        if (!$team) {
-            return response()->json(['message' => 'Team not found'], 404); // Return 404 if not found
-        }
-
-        $team->delete(); // Delete the team
-        return response()->json(['message' => 'Team deleted successfully.']); // Return success message
     }
 }

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Backlog;
 use App\Models\Status;
 use App\Models\Task;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 
 class StatusController extends BaseController
@@ -44,6 +46,11 @@ class StatusController extends BaseController
         ];
     }
 
+    private function clearBacklogCache(int $backlogId): void
+    {
+        // Redis::del("model:backlog:{$backlogId}");
+    }
+
     // OVERRIDE of the BaseController methods
     public function destroy(int $id): JsonResponse
     {
@@ -78,6 +85,8 @@ class StatusController extends BaseController
 
         $this->refreshOrder($statusToDelete->Backlog_ID);
 
+        $this->clearBacklogCache($statusToDelete->Backlog_ID);
+
         return response()->json([
             'message' => 'Status deleted successfully, and associated tasks reassigned to the default status.'
         ]);
@@ -93,6 +102,8 @@ class StatusController extends BaseController
         $newStatus = $this->modelClass::create($validated);
 
         $this->refreshOrder($newStatus->Backlog_ID);
+
+        $this->clearBacklogCache($newStatus->Backlog_ID);
 
         // Return the newly created resource
         return response()->json($newStatus, 201);
@@ -201,6 +212,8 @@ class StatusController extends BaseController
             $closed->Status_Order = $order;
             $closed->save();
         }
+
+        $this->clearBacklogCache($backlogId);
     }
 
     /**
@@ -251,6 +264,8 @@ class StatusController extends BaseController
         $status->save();
 
         $this->refreshOrder($status->Backlog_ID);
+
+        $this->clearBacklogCache($backlogId);
 
         return response()->json(['message' => 'Default status assigned successfully.']);
     }
@@ -304,6 +319,8 @@ class StatusController extends BaseController
         $status->save();
 
         $this->refreshOrder($status->Backlog_ID);
+
+        $this->clearBacklogCache($backlogId);
 
         return response()->json(['message' => 'Closed status assigned successfully.']);
     }

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redis;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
@@ -149,6 +150,14 @@ class AuthController extends Controller
             return response()->json(['error' => 'Not authenticated'], 401);
         }
 
+        // Check if the user is cached
+        // $cacheKey = 'user:me:' . $user->User_ID;
+        // $cachedData = Redis::get($cacheKey);
+
+        // if ($cachedData) {
+        //     return response()->json(json_decode($cachedData, true), 200);
+        // }
+
         // Get all the teams where the user is assigned a seat
         $seats = TeamUserSeat::where('User_ID', $user->User_ID)
             ->with([
@@ -178,7 +187,7 @@ class AuthController extends Controller
             ->whereNull('Time_Tracking_End_Time') // This checks for an active timer (no end time)
             ->first();
 
-        return response()->json([
+        $responseData = [
             "success" => true,
             "message" => "Is logged in",
             "userData" => $user,
@@ -186,7 +195,12 @@ class AuthController extends Controller
             "permissions" => $permissions,
             "userOrganisation" => $organisation,
             "userActiveTimeTrack" => $activeTimeTrack
-        ], 200);
+        ];
+
+        // Cache for 15 minutes
+        // Redis::setex($cacheKey, 900, json_encode($responseData));
+
+        return response()->json($responseData, 200);
     }
 
     /**

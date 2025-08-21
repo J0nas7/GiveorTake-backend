@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Backlog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 
 class BacklogController extends BaseController
 {
@@ -47,6 +49,30 @@ class BacklogController extends BaseController
         ];
     }
 
+    protected function afterUpdate($backlog): void
+    {
+        // Redis::del([
+        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
+        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $backlog->Backlog_ID,
+        // ]);
+
+        // if ($backlog->Project_ID) {
+        //     Redis::del("backlogs:project:{$backlog->Project_ID}");
+        // }
+    }
+
+    protected function afterDestroy($backlog): void
+    {
+        // Redis::del([
+        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
+        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $backlog->Backlog_ID,
+        // ]);
+
+        // if ($backlog->Project_ID) {
+        //     Redis::del("backlogs:project:{$backlog->Project_ID}");
+        // }
+    }
+
     /**
      * Display a listing of backlogs based on Project ID.
      *
@@ -55,17 +81,28 @@ class BacklogController extends BaseController
      */
     public function getBacklogsByProject(int $projectId): JsonResponse
     {
+        // $cacheKey = "backlogs:project:{$projectId}";
+
+        // $cachedBacklogs = Redis::get($cacheKey);
+
+        // if ($cachedBacklogs) {
+        //     return response()->json(json_decode($cachedBacklogs));
+        // }
+
         $backlogs = Backlog::where('Project_ID', $projectId)->get();
 
         if ($backlogs->isEmpty()) {
             return response()->json(['message' => 'No backlogs found for this project'], 404);
         }
 
+        // Redis::setex($cacheKey, 3600, $backlogs->toJson());
+
         return response()->json($backlogs);
     }
 
     public function finishBacklog(Request $request, int $backlogId): JsonResponse
     {
+
         $backlog = Backlog::find($backlogId);
 
         if (!$backlog) {
@@ -127,6 +164,14 @@ class BacklogController extends BaseController
             $backlog->delete();
 
             DB::commit();
+
+            // Redis cache invalidation
+            $this->afterDestroy($backlog);
+
+            if (!empty($targetBacklogId)) {
+                $targetBacklog = Backlog::find($targetBacklogId);
+                $this->afterUpdate($targetBacklog);
+            }
 
             return response()->json([
                 'message' => 'Backlog finished and tasks moved successfully',

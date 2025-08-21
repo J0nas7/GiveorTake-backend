@@ -10,6 +10,8 @@
 .env.testing
 .env.local
 .env.production
+secrets.md
+deploy-scaleway.sh
 .phpactor.json
 .phpunit.result.cache
 Homestead.json

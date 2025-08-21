@@ -5,39 +5,60 @@ namespace App\Http\Controllers;
 use App\Models\TaskMediaFile;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 
-class TaskMediaFileController extends Controller
+class TaskMediaFileController extends BaseController
 {
     /**
-     * Get media files by Task ID.
+     * The model class associated with this controller.
      *
-     * @param int $taskId
-     * @return JsonResponse
+     * @var string
      */
-    public function getMediaFilesByTask(int $taskId): JsonResponse
-    {
-        $mediaFiles = TaskMediaFile::where('Task_ID', $taskId)->get();
-
-        if ($mediaFiles->isEmpty()) {
-            return response()->json(['message' => 'No media files found for this task'], 404);
-        }
-
-        return response()->json($mediaFiles);
-    }
-
-    //// The rest of this TaskMediaFileController is RESTful API methods ////
+    protected string $modelClass = TaskMediaFile::class;
 
     /**
-     * Display a listing of the task media files.
+     * The relationships to eager load when fetching media files.
      *
-     * @return JsonResponse
+     * @var array
      */
-    public function index(): JsonResponse
+    protected array $with = [
+        'task',
+        'user',
+    ];
+
+    /**
+     * Validation rules for task media files.
+     *
+     * @return array
+     */
+    protected function rules(): array
     {
-        $mediaFiles = TaskMediaFile::all();
-        return response()->json($mediaFiles);
+        return [
+            'Task_ID' => 'required|integer|exists:GT_Tasks,Task_ID',
+            'Uploaded_By_User_ID' => 'required|integer|exists:GT_Users,User_ID',
+            'Media_File' => 'required|file|mimes:jpg,jpeg,png,pdf|max:10240',
+        ];
+    }
+
+    private function clearTaskCache(int $taskId): void
+    {
+        // Redis::del("model:task:{$taskId}");
+    }
+
+    /**
+     * Hook after deleting a media file.
+     *
+     * @param TaskMediaFile $mediaFile
+     * @return void
+     */
+    protected function afterDestroy($mediaFile): void
+    {
+        // Delete physical file
+        if (Storage::disk('public')->exists($mediaFile->Media_File_Path)) {
+            Storage::disk('public')->delete($mediaFile->Media_File_Path);
+            $this->clearTaskCache($mediaFile->Task_ID);
+        }
     }
 
     /**
@@ -85,70 +106,24 @@ class TaskMediaFileController extends Controller
         }
     }
 
-    /**
-     * Display the specified task media file.
-     *
-     * @param int $id
-     * @return JsonResponse
-     */
-    public function show(int $id): JsonResponse
-    {
-        $mediaFile = TaskMediaFile::find($id);
-
-        if (!$mediaFile) {
-            return response()->json(['message' => 'Task media file not found'], 404);
-        }
-
-        return response()->json($mediaFile);
-    }
+    //// CUSTOM METHODS ////
 
     /**
-     * Update the specified task media file in storage.
+     * Get media files by Task ID.
      *
-     * @param Request $request
-     * @param int $id
+     * @param int $taskId
      * @return JsonResponse
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function getMediaFilesByTask(int $taskId): JsonResponse
     {
-        $validated = $request->validate([
-            'Media_File_Name' => 'required|string',
-            'Media_File_Path' => 'required|string',
-            'Media_File_Type' => 'required|string',
-        ]);
+        $mediaFiles = TaskMediaFile::with($this->with)
+            ->where('Task_ID', $taskId)
+            ->get();
 
-        $mediaFile = TaskMediaFile::find($id);
-
-        if (!$mediaFile) {
-            return response()->json(['message' => 'Task media file not found'], 404);
+        if ($mediaFiles->isEmpty()) {
+            return response()->json(['message' => 'No media files found for this task'], 404);
         }
 
-        $mediaFile->update($validated);
-        return response()->json($mediaFile);
-    }
-
-    /**
-     * Remove the specified task media file from storage.
-     *
-     * @param int $id
-     * @return JsonResponse
-     */
-    public function destroy(int $id): JsonResponse
-    {
-        $mediaFile = TaskMediaFile::find($id);
-
-        if (!$mediaFile) {
-            return response()->json(['message' => 'Task media file not found'], 404);
-        }
-
-        // Delete the physical file from storage
-        if (Storage::disk('public')->exists($mediaFile->Media_File_Path)) {
-            Storage::disk('public')->delete($mediaFile->Media_File_Path);
-        }
-
-        // Delete the record from the database
-        $mediaFile->delete();
-
-        return response()->json(['message' => 'Task media file deleted successfully.']);
+        return response()->json($mediaFiles);
     }
 }
