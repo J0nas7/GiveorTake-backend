@@ -1,0 +1,57 @@
+name: Deploy Laravel to Scaleway
+on:
+  push:
+    branches: [ main ]
+env:
+  CONTAINER_ID: "${{ secrets.SCW_CONTAINER_ID }}"
+  SCW_REGISTRY: "${{ secrets.SCW_REGISTRY }}"
+  IMAGE_NAME: "${{ secrets.IMAGE_NAME }}" 
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install Scaleway CLI
+        run: |
+          curl -s https://raw.githubusercontent.com/scaleway/scaleway-cli/master/scripts/get.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Log in to Scaleway Container Registry
+        run: |
+          echo "${{ secrets.SCW_SECRET_KEY }}" | docker login rg.fr-par.scw.cloud -u nologin --password-stdin
+
+      - name: Set up Docker image tag
+        run: |
+          TIMESTAMP=$(date +%d-%b-%Y__%H.%M.%S)
+          IMAGE="${{ env.SCW_REGISTRY }}/${{ env.IMAGE_NAME }}:$TIMESTAMP"
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+
+      - name: Prepare .env file
+        run: |
+          cp .env.deploy .env
+          echo "DB_URL=${{ secrets.DB_URL }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+
+      - name: Build and push Docker image (with caching)
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Update Scaleway Serverless Container
+        run: scw container container update ${{ env.CONTAINER_ID }} registry-image=${{ env.IMAGE }}
+        env:
+          SCW_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
+          SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+          SCW_DEFAULT_ORGANIZATION_ID: ${{ secrets.SCW_DEFAULT_ORGANIZATION_ID }}
+          SCW_DEFAULT_PROJECT_ID: ${{ secrets.SCW_DEFAULT_PROJECT_ID }}
+          SCW_DEFAULT_REGION: fr-par
