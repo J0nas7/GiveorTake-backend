@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Organisation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 
 class OrganisationController extends BaseController
 {
@@ -46,12 +47,12 @@ class OrganisationController extends BaseController
 
     protected function afterUpdate($organisation): void
     {
-        // Redis::del("organisations:user:{$organisation->User_ID}");
+        Cache::forget("organisations:user:{$organisation->User_ID}");
     }
 
     protected function afterDestroy($organisation): void
     {
-        // Redis::del("organisations:user:{$organisation->User_ID}");
+        Cache::forget("organisations:user:{$organisation->User_ID}");
     }
 
     /**
@@ -62,13 +63,13 @@ class OrganisationController extends BaseController
      */
     public function getOrganisationsByUser(int $userId): JsonResponse
     {
-        // $cacheKey = "organisations:user:{$userId}";
-
-        // // Try to get from Redis
-        // $cachedData = Redis::get($cacheKey);
-        // if ($cachedData) {
-        //     return response()->json(json_decode($cachedData, true));
-        // }
+        // Try to get from Cache
+        $cacheKey = "organisations:user:{$userId}";
+        $cachedData = Cache::get($cacheKey);
+        if ($cachedData) {
+            $decodedData = json_decode($cachedData, true);
+            return response()->json($decodedData);
+        }
 
         // Get organisations where the user is the owner or the user is a member of a team within the organisation
         $organisations = Organisation::with(['teams.projects', 'teams.userSeats'])
@@ -82,8 +83,8 @@ class OrganisationController extends BaseController
             return response()->json(['message' => 'No organisations found for this user'], 404);
         }
 
-        // Cache in Redis for 1 hour
-        // Redis::setex($cacheKey, 3600, $organisations->toJson());
+        // Cache for 1 hour
+        Cache::put($cacheKey, $organisations->toJson(), 3600);
 
         return response()->json($organisations);
     }

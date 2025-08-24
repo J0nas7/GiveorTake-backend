@@ -6,7 +6,7 @@ use App\Helpers\PermissionHelper;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 
 class ProjectController extends BaseController
 {
@@ -41,23 +41,23 @@ class ProjectController extends BaseController
     }
 
     /**
-     * Custom: Get projects for a specific team, with Redis caching.
+     * Custom: Get projects for a specific team, with Caching.
      */
     public function getProjectsByTeam(int $teamId): JsonResponse
     {
-        // $cacheKey = "team:{$teamId}:projects";
+        $cacheKey = "team:{$teamId}:projects";
+        $cachedProjects = Cache::get($cacheKey);
 
-        // $cachedProjects = Redis::get($cacheKey);
+        if ($cachedProjects) {
+            $decodedProjects = json_decode($cachedProjects, true);
+            $projects = collect($decodedProjects);
+        } else {
+            $projects = Project::where('Team_ID', $teamId)->get();
 
-        // if ($cachedProjects) {
-        //     $projects = collect(json_decode($cachedProjects, true));
-        // } else {
-        $projects = Project::where('Team_ID', $teamId)->get();
-
-        //     if ($projects->isNotEmpty()) {
-        //         Redis::setex($cacheKey, 600, $projects->toJson()); // Cache 10 min
-        //     }
-        // }
+            if ($projects->isNotEmpty()) {
+                Cache::put($cacheKey, $projects->toJson(), 600); // Cache 10 min
+            }
+        }
 
         if ($projects->isEmpty()) {
             return response()->json(['message' => 'No projects found for this team'], 404);
@@ -74,7 +74,7 @@ class ProjectController extends BaseController
      */
     protected function afterStore($resource): void
     {
-        // Redis::del("team:{$resource->Team_ID}:projects");
+        Cache::forget("team:{$resource->Team_ID}:projects");
     }
 
     /**
@@ -82,10 +82,11 @@ class ProjectController extends BaseController
      */
     protected function afterUpdate($resource): void
     {
-        // Redis::del([
-        //     "model:project:{$resource->Project_ID}",
-        //     "team:{$resource->Team_ID}:projects"
-        // ]);
+        $keys = [
+            "model:project:{$resource->Project_ID}",
+            "team:{$resource->Team_ID}:projects"
+        ];
+        Cache::forgetMultiple($keys);
     }
 
     /**
@@ -93,10 +94,11 @@ class ProjectController extends BaseController
      */
     protected function afterDestroy($resource): void
     {
-        // Redis::del([
-        //     "model:project:{$resource->Project_ID}",
-        //     "team:{$resource->Team_ID}:projects"
-        // ]);
+        $keys = [
+            "model:project:{$resource->Project_ID}",
+            "team:{$resource->Team_ID}:projects"
+        ];
+        Cache::forgetMultiple($keys);
     }
 
     /**

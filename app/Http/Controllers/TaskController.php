@@ -8,7 +8,7 @@ use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class TaskController extends BaseController
@@ -58,7 +58,7 @@ class TaskController extends BaseController
     protected function afterStore($task): void
     {
         // Clear index cache
-        // Redis::del("model:tasksByBacklog:{$task->Backlog_ID}");
+        Cache::forget("model:tasksByBacklog:{$task->Backlog_ID}");
     }
 
     /**
@@ -66,7 +66,7 @@ class TaskController extends BaseController
      */
     protected function afterUpdate($task): void
     {
-        // Redis::del("model:tasksByBacklog:{$task->Backlog_ID}");
+        Cache::forget("model:tasksByBacklog:{$task->Backlog_ID}");
     }
 
     /**
@@ -74,7 +74,7 @@ class TaskController extends BaseController
      */
     protected function afterDestroy($task): void
     {
-        // Redis::del("model:tasksByBacklog:{$task->Backlog_ID}");
+        Cache::forget("model:tasksByBacklog:{$task->Backlog_ID}");
     }
 
     /**
@@ -173,7 +173,7 @@ class TaskController extends BaseController
             if ($task) {
                 $task->update(array_filter($taskData));
                 $updatedTasks[] = $task;
-                // Redis::del("model:tasksByBacklog:{$task->Backlog_ID}");
+                Cache::forget("model:tasksByBacklog:{$task->Backlog_ID}");
             }
         }
 
@@ -205,7 +205,7 @@ class TaskController extends BaseController
         foreach ($taskIds as $id) {
             $task = Task::withTrashed()->find($id);
             if ($task) {
-                // Redis::del("model:tasksByBacklog:{$task->Backlog_ID}");
+                Cache::forget("model:tasksByBacklog:{$task->Backlog_ID}");
             }
         }
 

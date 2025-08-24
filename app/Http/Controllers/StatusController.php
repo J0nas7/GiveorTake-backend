@@ -7,7 +7,7 @@ use App\Models\Status;
 use App\Models\Task;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class StatusController extends BaseController
@@ -48,7 +48,7 @@ class StatusController extends BaseController
 
     private function clearBacklogCache(int $backlogId): void
     {
-        // Redis::del("model:backlog:{$backlogId}");
+        Cache::forget("model:backlog:{$backlogId}");
     }
 
     // OVERRIDE of the BaseController methods

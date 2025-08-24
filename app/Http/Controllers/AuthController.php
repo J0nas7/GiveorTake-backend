@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
@@ -59,6 +59,10 @@ class AuthController extends Controller
                 $credentials
             ], 401);
         }
+
+        $user = $result['data']['user'];
+        $cacheKey = 'user:me:' . $user->User_ID;
+        Cache::forget($cacheKey);
 
         return response()->json($result, 200);
     }
@@ -133,6 +137,10 @@ class AuthController extends Controller
      */
     public function logout()
     {
+        $user = $this->getAuthenticatedUser();
+        $cacheKey = 'user:me:' . $user->User_ID;
+        Cache::forget($cacheKey);
+
         $this->logoutUser();
         return response()->json(['message' => 'Logged out successfully'], 200);
     }
@@ -151,12 +159,12 @@ class AuthController extends Controller
         }
 
         // Check if the user is cached
-        // $cacheKey = 'user:me:' . $user->User_ID;
-        // $cachedData = Redis::get($cacheKey);
+        $cacheKey = 'user:me:' . $user->User_ID;
+        $cachedData = Cache::get($cacheKey);
 
-        // if ($cachedData) {
-        //     return response()->json(json_decode($cachedData, true), 200);
-        // }
+        if ($cachedData) {
+            return response()->json($cachedData, 200);
+        }
 
         // Get all the teams where the user is assigned a seat
         $seats = TeamUserSeat::where('User_ID', $user->User_ID)
@@ -198,7 +206,7 @@ class AuthController extends Controller
         ];
 
         // Cache for 15 minutes
-        // Redis::setex($cacheKey, 900, json_encode($responseData));
+        Cache::put($cacheKey, $responseData, 900);
 
         return response()->json($responseData, 200);
     }

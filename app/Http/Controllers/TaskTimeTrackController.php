@@ -6,7 +6,7 @@ use App\Models\TaskTimeTrack;
 use App\Models\Backlog;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 
 class TaskTimeTrackController extends BaseController
 {
@@ -46,14 +46,14 @@ class TaskTimeTrackController extends BaseController
     }
 
     /**
-     * Clear Redis cache for a given task.
+     * Clear cache for a given task.
      *
      * @param int $taskId
      * @return void
      */
     private function clearTaskCache(int $taskId): void
     {
-        // Redis::del("model:task:{$taskId}");
+        Cache::forget("model:task:{$taskId}");
     }
 
     protected function afterStore($timeTrack): void

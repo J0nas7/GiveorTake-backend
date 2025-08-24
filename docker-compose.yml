@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  laravel-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel-app
+    ports:
+      - "8080:8080"   # Only expose Laravel app externally
+    depends_on:
+      - redis
+    environment:
+      APP_ENV: production
+      APP_DEBUG: false
+      APP_KEY: base64:YOUR_APP_KEY_HERE
+      DB_CONNECTION: pgsql
+      DB_HOST: your-postgres-host
+      DB_PORT: 5432
+      DB_DATABASE: your-db-name
+      DB_USERNAME: your-db-user
+      DB_PASSWORD: your-db-password
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: null
+
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: always
+    # Internal only, not exposed to the internet
+    # No port mapping means Laravel can still reach it internally via service name
+    volumes:
+      - redis-data:/data   # Optional: keep Redis data during container restarts
+
+volumes:
+  redis-data:

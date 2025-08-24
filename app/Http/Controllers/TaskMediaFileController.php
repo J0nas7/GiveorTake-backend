@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TaskMediaFile;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class TaskMediaFileController extends BaseController
@@ -43,7 +43,7 @@ class TaskMediaFileController extends BaseController
 
     private function clearTaskCache(int $taskId): void
     {
-        // Redis::del("model:task:{$taskId}");
+        Cache::forget("model:task:{$taskId}");
     }
 
     /**

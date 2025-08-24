@@ -6,7 +6,7 @@ use App\Models\Team;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 
 class TeamController extends BaseController
 {
@@ -52,12 +52,13 @@ class TeamController extends BaseController
      */
     protected function afterUpdate($team): void
     {
-        // Invalidate cache if using Redis for caching teams
-        // Redis::del([
-        //     "teams:organisation:{$team->Organisation_ID}",
-        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
-        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $team->Team_ID,
-        // ]);
+        // Invalidate cache if using Cache for caching teams
+        $keys = [
+            "teams:organisation:{$team->Organisation_ID}",
+            'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
+            'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $team->Team_ID,
+        ];
+        Cache::deleteMultiple($keys);
     }
 
     /**
@@ -65,11 +66,12 @@ class TeamController extends BaseController
      */
     protected function afterDestroy($team): void
     {
-        Redis::del([
+        $keys = [
             "teams:organisation:{$team->Organisation_ID}",
             'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
             'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $team->Team_ID,
-        ]);
+        ];
+        Cache::deleteMultiple($keys);
     }
 
     /**
@@ -80,13 +82,13 @@ class TeamController extends BaseController
      */
     public function getTeamsByOrganisation(int $organisationId): JsonResponse
     {
-        // $cacheKey = "teams:organisation:{$organisationId}";
-
-        // // Try to get from Redis
-        // $cachedData = Redis::get($cacheKey);
-        // if ($cachedData) {
-        //     return response()->json(json_decode($cachedData, true));
-        // }
+        // Try to get from Cache
+        $cacheKey = "teams:organisation:{$organisationId}";
+        $cachedData = Cache::get($cacheKey);
+        if ($cachedData) {
+            $decodedData = json_decode($cachedData, true);
+            return response()->json($decodedData);
+        }
 
         $teams = Team::with($this->with)
             ->where('Organisation_ID', $organisationId)
@@ -96,8 +98,8 @@ class TeamController extends BaseController
             return response()->json(['message' => 'No teams found for this organisation'], 404);
         }
 
-        // Cache in Redis for 1 hour
-        // Redis::setex($cacheKey, 3600, $teams->toJson());
+        // Cache for 1 hour
+        Cache::put($cacheKey, $teams->toJson(), 3600);
 
         return response()->json($teams);
     }

@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 
 class TeamUserSeatController extends BaseController
 {
@@ -29,19 +30,19 @@ class TeamUserSeatController extends BaseController
     protected function afterStore($resource): void
     {
         // Clear team-specific cache
-        // Redis::del("team:{$resource->Team_ID}:seats");
+        Cache::forget("team:{$resource->Team_ID}:seats");
     }
 
     protected function afterUpdate($resource): void
     {
         // Clear team-specific cache
-        // Redis::del("team:{$resource->Team_ID}:seats");
+        Cache::forget("team:{$resource->Team_ID}:seats");
     }
 
     protected function afterDestroy($resource): void
     {
         // Clear team-specific cache
-        // Redis::del("team:{$resource->Team_ID}:seats");
+        Cache::forget("team:{$resource->Team_ID}:seats");
     }
 
     /**
@@ -49,22 +50,22 @@ class TeamUserSeatController extends BaseController
      */
     public function getTeamUserSeatsByTeamId(int $teamId)
     {
-        // $redisKey = "team:{$teamId}:seats";
+        $cacheKey = "team:{$teamId}:seats";
+        $cached = Cache::get($cacheKey);
+        if ($cached) {
+            $decodedData = json_decode($cached, true);
+            return response()->json($decodedData);
+        }
 
-        // $cached = Redis::get($redisKey);
-        // if ($cached) {
-        //     $seats = json_decode($cached, true);
-        // } else {
         $seats = $this->modelClass::where('Team_ID', $teamId)
             ->with($this->with)
             ->get();
 
-        //     if ($seats->isEmpty()) {
-        //         return response()->json(['message' => 'No user seats found for the specified team'], 404);
-        //     }
+        if ($seats->isEmpty()) {
+            return response()->json(['message' => 'No user seats found for the specified team'], 404);
+        }
 
-        //     Redis::setex($redisKey, 3600, $seats->toJson());
-        // }
+        Cache::put($cacheKey, $seats->toJson(), 3600);
 
         return response()->json($seats);
     }
@@ -95,7 +96,7 @@ class TeamUserSeatController extends BaseController
         $seat->update($validated);
 
         // Clear team-specific cache
-        // Redis::del("team:{$seat->Team_ID}:seats");
+        Cache::forget("team:{$seat->Team_ID}:seats");
 
         return response()->json($seat);
     }
@@ -122,7 +123,7 @@ class TeamUserSeatController extends BaseController
         $seat->delete();
 
         // Clear team-specific cache
-        // Redis::del("team:{$seat->Team_ID}:seats");
+        Cache::forget("team:{$seat->Team_ID}:seats");
 
         return response()->json(['message' => 'Seat deleted successfully']);
     }

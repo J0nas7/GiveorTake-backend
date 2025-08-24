@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TaskComment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class TaskCommentController extends BaseController
@@ -44,14 +44,14 @@ class TaskCommentController extends BaseController
     }
 
     /**
-     * Clear the Redis cache for a given task.
+     * Clear the cache for a given task.
      *
      * @param int $taskId
      * @return void
      */
     private function clearTaskCache(int $taskId): void
     {
-        // Redis::del("model:task:{$taskId}");
+        Cache::forget("model:task:{$taskId}");
     }
 
     protected function afterStore($comment): void

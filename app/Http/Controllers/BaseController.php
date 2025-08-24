@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 
 abstract class BaseController extends Controller
 {
@@ -56,21 +57,21 @@ abstract class BaseController extends Controller
      */
     public function index(): JsonResponse
     {
-        // $cacheKey = 'model:' . Str::snake(class_basename($this->modelClass)) . ':all';
+        // Try to get data from Cache
+        $cacheKey = 'model:' . Str::snake(class_basename($this->modelClass)) . ':all';
+        $cachedResources = Cache::get($cacheKey);
 
-        // // Try to get data from Redis
-        // $cachedResources = Redis::get($cacheKey);
-
-        // if ($cachedResources) {
-        //     return response()->json(json_decode($cachedResources));
-        // }
+        if ($cachedResources) {
+            $decodedResources = json_decode($cachedResources, true);
+            return response()->json($decodedResources);
+        }
 
         // If not in cache, fetch from DB
         // Retrieve all records of the model with defined eager-loaded relationships
         $resources = $this->modelClass::with($this->with)->get();
 
-        // Store in Redis for 1 hour (3600 seconds)
-        // Redis::setex($cacheKey, 3600, $resources->toJson());
+        // Store in Cache for 1 hour (3600 seconds)
+        Cache::put($cacheKey, $resources->toJson(), 3600);
 
         // Return the records as a JSON response
         return response()->json($resources);
@@ -91,7 +92,7 @@ abstract class BaseController extends Controller
         $resource = $this->modelClass::create($validated);
 
         // Invalidate the index cache
-        // Redis::del('model:' . Str::snake(class_basename($this->modelClass)) . ':all');
+        Cache::forget('model:' . Str::snake(class_basename($this->modelClass)) . ':all');
 
         $this->afterStore($resource);
 
@@ -107,13 +108,13 @@ abstract class BaseController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        // $cacheKey = 'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $id;
+        $cacheKey = 'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $id;
+        $cachedResource = Cache::get($cacheKey);
 
-        // $cachedResource = Redis::get($cacheKey);
-
-        // if ($cachedResource) {
-        //     return response()->json(json_decode($cachedResource));
-        // }
+        if ($cachedResource) {
+            $decodedResource = json_decode($cachedResource, true);
+            return response()->json($decodedResource);
+        }
 
         // Find the resource by ID and eager load defined relationships
         $resource = $this->modelClass::with($this->with)->find($id);
@@ -123,7 +124,7 @@ abstract class BaseController extends Controller
             return response()->json(['message' => Str::singular(class_basename($this->modelClass)) . ' not found'], 404);
         }
 
-        // Redis::setex($cacheKey, 3600, $resource->toJson());
+        Cache::put($cacheKey, $resource->toJson(), 3600);
 
         // Return the found resource as a JSON response
         return response()->json($resource);
@@ -153,10 +154,12 @@ abstract class BaseController extends Controller
         $resource->update($validated);
 
         // Invalidate both the index and the specific resource cache
-        // Redis::del([
-        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
-        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $id
-        // ]);
+        $keys = [
+            'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
+            'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $id
+        ];
+
+        Cache::deleteMultiple($keys);
 
         $this->afterUpdate($resource);
 
@@ -184,10 +187,12 @@ abstract class BaseController extends Controller
         $resource->delete();
 
         // Invalidate both the index and the specific resource cache
-        // Redis::del([
-        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
-        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $id
-        // ]);
+        $keys = [
+            'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
+            'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $id
+        ];
+
+        Cache::deleteMultiple($keys);
 
         $this->afterDestroy($resource);
 

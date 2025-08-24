@@ -7,7 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 
 class BacklogController extends BaseController
 {
@@ -51,26 +51,30 @@ class BacklogController extends BaseController
 
     protected function afterUpdate($backlog): void
     {
-        // Redis::del([
-        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
-        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $backlog->Backlog_ID,
-        // ]);
+        $keys = [
+            'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
+            'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $backlog->Backlog_ID,
+        ];
 
-        // if ($backlog->Project_ID) {
-        //     Redis::del("backlogs:project:{$backlog->Project_ID}");
-        // }
+        Cache::deleteMultiple($keys);
+
+        if ($backlog->Project_ID) {
+            Cache::forget("backlogs:project:{$backlog->Project_ID}");
+        }
     }
 
     protected function afterDestroy($backlog): void
     {
-        // Redis::del([
-        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
-        //     'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $backlog->Backlog_ID,
-        // ]);
+        $keys = [
+            'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
+            'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $backlog->Backlog_ID,
+        ];
 
-        // if ($backlog->Project_ID) {
-        //     Redis::del("backlogs:project:{$backlog->Project_ID}");
-        // }
+        Cache::deleteMultiple($keys);
+
+        if ($backlog->Project_ID) {
+            Cache::forget("backlogs:project:{$backlog->Project_ID}");
+        }
     }
 
     /**
@@ -81,13 +85,13 @@ class BacklogController extends BaseController
      */
     public function getBacklogsByProject(int $projectId): JsonResponse
     {
-        // $cacheKey = "backlogs:project:{$projectId}";
+        $cacheKey = "backlogs:project:{$projectId}";
+        $cachedBacklogs = Cache::get($cacheKey);
 
-        // $cachedBacklogs = Redis::get($cacheKey);
-
-        // if ($cachedBacklogs) {
-        //     return response()->json(json_decode($cachedBacklogs));
-        // }
+        if ($cachedBacklogs) {
+            $decodedBacklogs = json_decode($cachedBacklogs, true);
+            return response()->json($decodedBacklogs);
+        }
 
         $backlogs = Backlog::where('Project_ID', $projectId)->get();
 
@@ -95,7 +99,7 @@ class BacklogController extends BaseController
             return response()->json(['message' => 'No backlogs found for this project'], 404);
         }
 
-        // Redis::setex($cacheKey, 3600, $backlogs->toJson());
+        Cache::put($cacheKey, $backlogs->toJson(), 3600);
 
         return response()->json($backlogs);
     }
@@ -165,7 +169,7 @@ class BacklogController extends BaseController
 
             DB::commit();
 
-            // Redis cache invalidation
+            // Cache invalidation
             $this->afterDestroy($backlog);
 
             if (!empty($targetBacklogId)) {
