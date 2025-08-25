@@ -57,7 +57,7 @@ jobs:
         run: terraform apply -auto-approve -var="registry_image=${{ env.IMAGE }}"
         env:
           TF_VAR_scaleway_project_id: ${{ secrets.SCW_DEFAULT_PROJECT_ID }}
-          TF_VAR_container_name: ${{ secrets.IMAGE_NAME }}
+          TF_VAR_container_name: ${{ secrets.SCW_CONTAINER_NAME }}
           SCW_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
           SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
           SCW_DEFAULT_ORGANIZATION_ID: ${{ secrets.SCW_DEFAULT_ORGANIZATION_ID }}
