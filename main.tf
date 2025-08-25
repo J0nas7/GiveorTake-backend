@@ -28,7 +28,7 @@ variable "registry_image" {
   type        = string
 }
 
-resource "scaleway_serverless_container" "laravel_app" {
+resource "scaleway_container" "laravel_app" {
   name           = var.container_name
   registry_image = var.registry_image
   port           = 8080
@@ -39,5 +39,5 @@ resource "scaleway_serverless_container" "laravel_app" {
 }
 
 output "container_url" {
-  value = scaleway_serverless_container.laravel_app.url
+  value = scaleway_container.laravel_app.url
 }
