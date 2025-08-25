@@ -12,6 +12,7 @@
 .env.production
 secrets.md
 deploy-scaleway.sh
+terraform.tfvars
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
