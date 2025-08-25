@@ -45,5 +45,5 @@ resource "scaleway_container" "laravel_app" {
 }
 
 output "container_url" {
-  value = scaleway_container.laravel_app.url
+  value = scaleway_container.laravel_app.domain_name
 }
