@@ -37,7 +37,6 @@ resource "scaleway_container" "laravel_app" {
   name           = var.container_name
   registry_image = var.registry_image
   namespace_id   = data.scaleway_container_namespace.laravel_namespace.id
-  zone       = "fr-par-1"
   port           = 8080
   min_scale      = 0    # Scale to zero when idle
   max_scale      = 10   # Max 10 instances under load
