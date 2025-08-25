@@ -13,6 +13,8 @@
 secrets.md
 deploy-scaleway.sh
 terraform.tfvars
+*.tfstate.backup
+.terraform/
 .phpactor.json
 .phpunit.result.cache
 Homestead.json

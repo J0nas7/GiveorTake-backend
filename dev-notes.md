@@ -14,6 +14,16 @@ docker build --platform linux/amd64 -t giveortake-laravel-backend .
 Re-tag and push:
 docker tag giveortake-laravel-backend rg.fr-par.scw.cloud/namespace-giveortake-laravel-backend/giveortake-laravel-backend:15-Aug-2025__11.20.15 && docker push rg.fr-par.scw.cloud/namespace-giveortake-laravel-backend/giveortake-laravel-backend:15-Aug-2025__11.20.15
 
+## TERRAFORM
+Import state:
+terraform import \
+  -var="container_name=${CONTAINER_NAME}" \
+  -var="registry_image=${REGISTRY_IMAGE}" \
+  -var="scaleway_project_id=${PROJECT_ID}" \
+  scaleway_container.${RESOURCE_NAME} \
+  ${REGION}/${CONTAINER_ID}
+
+
 ## Deployment
 Make it executable: chmod +x deploy-scaleway.sh
 Run it: ./deploy-scaleway.sh
