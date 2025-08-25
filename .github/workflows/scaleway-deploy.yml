@@ -53,6 +53,11 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
+      - name: Import existing Scaleway container
+        run: |
+          terraform import scaleway_container.laravel_app fr-par/${{ secrets.SCW_NAMESPACE_ID }}/${{ env.IMAGE_NAME }}
+        continue-on-error: true
+
       - name: Update Scaleway Container with New Image
         run: terraform apply -auto-approve -var="registry_image=${{ env.IMAGE }}"
         env:
