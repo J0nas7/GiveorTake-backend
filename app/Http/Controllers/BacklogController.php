@@ -28,7 +28,8 @@ class BacklogController extends BaseController
         'project.team.organisation',
         'team',
         'statuses',
-        'tasks'
+        'tasks.backlog.statuses',
+        'tasks.subTasks.status'
     ];
 
     /**

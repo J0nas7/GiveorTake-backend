@@ -27,11 +27,14 @@ class TaskController extends BaseController
      */
     protected array $with = [
         'backlog.project.team.userSeats.user',
+        'backlog.statuses',
         'timeTracks',
         'comments.user',
         'comments.childrenComments.user',
         'mediaFiles.user',
-        'status'
+        'status',
+        'subTasks.status',
+        'parentTask',
     ];
 
     /**
@@ -44,6 +47,7 @@ class TaskController extends BaseController
         return [
             'Backlog_ID' => 'required|integer|exists:GT_Backlogs,Backlog_ID',
             'Task_Title' => 'required|string|max:255',
+            'Parent_Task_ID' => 'nullable|integer|exists:GT_Tasks,Task_ID',
             'Task_Description' => 'nullable|string',
             'Status_ID' => 'required|integer|exists:GT_Backlog_Statuses,Status_ID',
             'Assigned_User_ID' => 'nullable|integer|exists:GT_Users,User_ID',
@@ -96,6 +100,9 @@ class TaskController extends BaseController
 
         $task = Task::create(array_merge($validated, ['Task_Key' => $taskKey]));
 
+        // Eager load the task relationships
+        $task->load($this->with);
+
         $this->afterStore($task);
 
         return response()->json($task, 201);
@@ -108,6 +115,7 @@ class TaskController extends BaseController
     {
         $tasks = Task::with($this->with)
             ->where('Backlog_ID', $backlogId)
+            ->whereNull('Parent_Task_ID')
             ->get();
 
         if ($tasks->isEmpty()) {
@@ -143,6 +151,11 @@ class TaskController extends BaseController
 
         $task = Task::with($this->with)
             ->where('Task_Key', $taskKey)
+            ->where('Backlog_ID', function ($query) use ($project) {
+                $query->select('Backlog_ID')
+                    ->from('GT_Backlogs')
+                    ->where('Project_ID', $project->Project_ID);
+            })
             ->first();
 
         if (!$task) {
@@ -161,6 +174,7 @@ class TaskController extends BaseController
             'tasks' => 'required|array',
             'tasks.*.Task_ID' => 'required|integer|exists:GT_Tasks,Task_ID',
             'tasks.*.Backlog_ID' => 'nullable|integer|exists:GT_Backlogs,Backlog_ID',
+            'tasks.*.Parent_Task_ID' => 'nullable|integer|exists:GT_Tasks,Task_ID',
             'tasks.*.Status_ID' => 'nullable|integer|exists:GT_Backlog_Statuses,Status_ID',
             'tasks.*.Task_Due_Date' => 'nullable|date',
             'tasks.*.Assigned_User_ID' => 'nullable|integer|exists:GT_Users,User_ID',

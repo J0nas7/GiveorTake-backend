@@ -169,6 +169,7 @@ class CreateProjectManagementTables extends Migration
             $prefix = 'Task_';
 
             $table->bigIncrements($prefix . 'ID'); // Primary key
+            $table->bigInteger('Parent_Task_ID')->unsigned()->nullable(); // Foreign key to tasks (for sub-tasks)
             $table->bigInteger($prefix . 'Key')->unsigned(); // Project-related key to count number of tasks
             $table->bigInteger('Backlog_ID')->unsigned(); // Foreign key to Backlogs
             $table->bigInteger('Team_ID')->unsigned()->nullable(); // Optional: Assign to a team

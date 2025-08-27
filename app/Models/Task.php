@@ -14,6 +14,7 @@ class Task extends Model
     protected $primaryKey = 'Task_ID'; // Primary key
 
     protected $fillable = [
+        'Parent_Task_ID',
         'Task_Key',
         'Backlog_ID',
         'Team_ID',
@@ -44,6 +45,15 @@ class Task extends Model
     public function team()
     {
         return $this->belongsTo(Team::class, 'Team_ID');
+    }
+
+    public function parentTask()
+    {
+        return $this->belongsTo(Task::class, 'Parent_Task_ID');
+    }
+    public function subTasks()
+    {
+        return $this->hasMany(Task::class, 'Parent_Task_ID', 'Task_ID');
     }
 
     public function user()

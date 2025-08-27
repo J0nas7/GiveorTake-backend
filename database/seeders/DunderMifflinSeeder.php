@@ -330,7 +330,7 @@ class DunderMifflinSeeder extends Seeder
                         $statusMap = seedStatusesForBacklog($backlog);
 
                         foreach ($tasks as $task) {
-                            Task::create([
+                            $newTask = Task::create([
                                 'Task_Key'         => $taskNumber++,
                                 'Backlog_ID'       => $backlog->Backlog_ID,
                                 'Team_ID'          => $teamId,
@@ -340,6 +340,29 @@ class DunderMifflinSeeder extends Seeder
                                 'Task_Description' => $task[4] ?? null,
                                 'Task_CreatedAt'   => $task[2],
                             ]);
+
+                            if ($taskNumber % 2 == 0) {
+                                Task::create([
+                                    'Parent_Task_ID'  => $newTask->Task_ID,
+                                    'Task_Key'         => $taskNumber++,
+                                    'Backlog_ID'       => $backlog->Backlog_ID,
+                                    'Team_ID'          => $teamId,
+                                    'Assigned_User_ID' => $task[3] ?? null,
+                                    'Task_Title'       => "Sub 1",
+                                    'Status_ID'        => $statusMap[$task[1]] ?? null, // Lookup by status name
+                                    'Task_CreatedAt'   => $task[2],
+                                ]);
+                                Task::create([
+                                    'Parent_Task_ID'  => $newTask->Task_ID,
+                                    'Task_Key'         => $taskNumber++,
+                                    'Backlog_ID'       => $backlog->Backlog_ID,
+                                    'Team_ID'          => $teamId,
+                                    'Assigned_User_ID' => $task[3] ?? null,
+                                    'Task_Title'       => "Sub 2",
+                                    'Status_ID'        => $statusMap[$task[1]] ?? null, // Lookup by status name
+                                    'Task_CreatedAt'   => $task[2],
+                                ]);
+                            }
                         }
                     }
 
