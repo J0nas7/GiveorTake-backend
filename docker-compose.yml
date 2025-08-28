@@ -1,39 +1,68 @@
-version: "3.9"
-
 services:
-  laravel-app:
+  # Next.js Frontend (Live Coding Enabled)
+  frontend:
+    build:
+      context: ../giveortake-nextjs-frontend
+      dockerfile: Dockerfile
+    container_name: nextjs-app
+    restart: unless-stopped
+    command: npm run dev  # Run Next.js in development mode
+    volumes:
+      - ../giveortake-nextjs-frontend:/app  # Mount Next.js source code
+      - /app/node_modules    # Exclude node_modules to avoid conflicts
+      - /app/.next           # Exclude .next to avoid conflicts with the build cache
+    ports:
+      - "3000:3000"  # Map host:container port
+    environment:
+      - NODE_ENV=development
+    networks:
+      - app-network
+    depends_on:
+      - backend
+
+  # Laravel Backend (Live Coding Enabled)
+  backend:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: laravel-app
+    restart: unless-stopped
+    volumes:
+      - .:/var/www/html  # Mount Laravel source code
+      - /var/www/html/vendor  # Exclude vendor folder
+      - ./database:/var/www/html/database
     ports:
-      - "8080:8080"   # Only expose Laravel app externally
+      - "8080:8080"  # Map host:container port
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=null
+      - REDIS_PORT=6379
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+    networks:
+      - app-network
     depends_on:
       - redis
-    environment:
-      APP_ENV: production
-      APP_DEBUG: false
-      APP_KEY: base64:YOUR_APP_KEY_HERE
-      DB_CONNECTION: pgsql
-      DB_HOST: your-postgres-host
-      DB_PORT: 5432
-      DB_DATABASE: your-db-name
-      DB_USERNAME: your-db-user
-      DB_PASSWORD: your-db-password
-      CACHE_DRIVER: redis
-      QUEUE_CONNECTION: redis
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: null
 
+  # Redis Service
   redis:
-    image: redis:7
+    image: redis:alpine
     container_name: redis
-    restart: always
-    # Internal only, not exposed to the internet
-    # No port mapping means Laravel can still reach it internally via service name
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
     volumes:
-      - redis-data:/data   # Optional: keep Redis data during container restarts
+      - redis_data:/data
+    networks:
+      - app-network
 
+# Define volumes and networks
 volumes:
-  redis-data:
+  redis_data:
+
+networks:
+  app-network:
+    driver: bridge
