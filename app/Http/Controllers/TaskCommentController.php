@@ -43,30 +43,39 @@ class TaskCommentController extends BaseController
         ];
     }
 
-    /**
-     * Clear the cache for a given task.
-     *
-     * @param int $taskId
-     * @return void
-     */
-    private function clearTaskCache(int $taskId): void
+    protected function clearTaskCache($comment): void
     {
-        Cache::forget("model:task:{$taskId}");
+        $modelName = Str::snake(class_basename($this->modelClass));
+        $keys = [
+            "model:{$modelName}:all",
+            "model:{$modelName}:{$comment->Comment_ID}"
+        ];
+
+        Cache::deleteMultiple($keys);
+
+        if ($comment->Task_ID) {
+            $keys = [
+                "model:task:{$comment->Task_ID}",
+                "comments:task:{$comment->Task_ID}"
+            ];
+
+            Cache::deleteMultiple($keys);
+        }
     }
 
     protected function afterStore($comment): void
     {
-        $this->clearTaskCache($comment->Task_ID);
+        $this->clearTaskCache($comment);
     }
 
     protected function afterUpdate($comment): void
     {
-        $this->clearTaskCache($comment->Task_ID);
+        $this->clearTaskCache($comment);
     }
 
     protected function afterDestroy($comment): void
     {
-        $this->clearTaskCache($comment->Task_ID);
+        $this->clearTaskCache($comment);
     }
 
     /**
@@ -77,6 +86,14 @@ class TaskCommentController extends BaseController
      */
     public function getCommentsByTask(int $taskId): JsonResponse
     {
+        $cacheKey = "comments:task:{$taskId}";
+        $cachedComments = Cache::get($cacheKey);
+
+        if ($cachedComments) {
+            $decodedComments = json_decode($cachedComments, true);
+            return response()->json($decodedComments);
+        }
+
         $comments = TaskComment::with(['childrenComments', 'parentComment'])
             ->where('Task_ID', $taskId)
             ->get();
@@ -84,6 +101,8 @@ class TaskCommentController extends BaseController
         if ($comments->isEmpty()) {
             return response()->json(['message' => 'No comments found for this task'], 404);
         }
+
+        Cache::put($cacheKey, $comments->toJson(), 3600);
 
         return response()->json($comments);
     }

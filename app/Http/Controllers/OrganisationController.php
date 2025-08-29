@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Organisation;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Cache;
 
@@ -39,20 +40,40 @@ class OrganisationController extends BaseController
     protected function rules(): array
     {
         return [
-            'User_ID' => 'required|integer|exists:users,User_ID', // or the correct users table/column
+            'User_ID' => 'required|integer|exists:GT_Users,User_ID', // or the correct users table/column
             'Organisation_Name' => 'required|string|max:255',
             'Organisation_Description' => 'nullable|string',
         ];
     }
 
+    protected function clearOrganisationCache($organisation): void
+    {
+        $modelName = Str::snake(class_basename($this->modelClass));
+        $keys = [
+            "model:{$modelName}:all",
+            "model:{$modelName}:{$organisation->Organisation_ID}",
+        ];
+
+        Cache::deleteMultiple($keys);
+
+        if ($organisation->User_ID) {
+            Cache::forget("organisations:user:{$organisation->User_ID}");
+        }
+    }
+
+    protected function afterStore($organisation): void
+    {
+        $this->clearOrganisationCache($organisation);
+    }
+
     protected function afterUpdate($organisation): void
     {
-        Cache::forget("organisations:user:{$organisation->User_ID}");
+        $this->clearOrganisationCache($organisation);
     }
 
     protected function afterDestroy($organisation): void
     {
-        Cache::forget("organisations:user:{$organisation->User_ID}");
+        $this->clearOrganisationCache($organisation);
     }
 
     /**
@@ -73,7 +94,7 @@ class OrganisationController extends BaseController
 
         // Get organisations where the user is the owner or the user is a member of a team within the organisation
         $organisations = Organisation::with(['teams.projects', 'teams.userSeats'])
-            ->where('User_ID', $userId)  // Check if the user is the owner of the organisation
+            ->where('User_ID', $userId)
             ->orWhereHas('teams.userSeats', function ($query) use ($userId) {
                 $query->where('User_ID', $userId);  // Check if the user has a seat in any team within the organisation
             })

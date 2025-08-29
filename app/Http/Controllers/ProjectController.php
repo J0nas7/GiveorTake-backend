@@ -6,6 +6,7 @@ use App\Helpers\PermissionHelper;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
 
 class ProjectController extends BaseController
@@ -40,12 +41,42 @@ class ProjectController extends BaseController
         ];
     }
 
+    protected function clearProjectCache($project): void
+    {
+        $modelName = Str::snake(class_basename($this->modelClass));
+        $keys = [
+            "model:{$modelName}:all",
+            "model:{$modelName}:{$project->Project_ID}",
+        ];
+
+        Cache::deleteMultiple($keys);
+
+        if ($project->Team_ID) {
+            Cache::forget("projects:team:{$project->Team_ID}");
+        }
+    }
+
+    protected function afterStore($project): void
+    {
+        $this->clearProjectCache($project);
+    }
+
+    protected function afterUpdate($project): void
+    {
+        $this->clearProjectCache($project);
+    }
+
+    protected function afterDestroy($project): void
+    {
+        $this->clearProjectCache($project);
+    }
+
     /**
      * Custom: Get projects for a specific team, with Caching.
      */
     public function getProjectsByTeam(int $teamId): JsonResponse
     {
-        $cacheKey = "team:{$teamId}:projects";
+        $cacheKey = "projects:team:{$teamId}";
         $cachedProjects = Cache::get($cacheKey);
 
         if ($cachedProjects) {
@@ -67,38 +98,6 @@ class ProjectController extends BaseController
         $filteredProjects = PermissionHelper::filterByPermission($projects, 'accessProject', 'Project_ID');
 
         return response()->json($filteredProjects);
-    }
-
-    /**
-     * Hook: after project is created, clear team cache.
-     */
-    protected function afterStore($resource): void
-    {
-        Cache::forget("team:{$resource->Team_ID}:projects");
-    }
-
-    /**
-     * Hook: after project is updated, clear project + team cache.
-     */
-    protected function afterUpdate($resource): void
-    {
-        $keys = [
-            "model:project:{$resource->Project_ID}",
-            "team:{$resource->Team_ID}:projects"
-        ];
-        Cache::forgetMultiple($keys);
-    }
-
-    /**
-     * Hook: after project is deleted, clear project + team cache.
-     */
-    protected function afterDestroy($resource): void
-    {
-        $keys = [
-            "model:project:{$resource->Project_ID}",
-            "team:{$resource->Team_ID}:projects"
-        ];
-        Cache::forgetMultiple($keys);
     }
 
     /**

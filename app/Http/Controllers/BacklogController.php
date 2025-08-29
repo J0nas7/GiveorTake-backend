@@ -50,13 +50,13 @@ class BacklogController extends BaseController
         ];
     }
 
-    protected function afterUpdate($backlog): void
+    protected function clearBacklogCache($backlog): void
     {
+        $modelName = Str::snake(class_basename($this->modelClass));
         $keys = [
-            'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
-            'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $backlog->Backlog_ID,
+            "model:{$modelName}:all",
+            "model:{$modelName}:{$backlog->Backlog_ID}",
         ];
-
         Cache::deleteMultiple($keys);
 
         if ($backlog->Project_ID) {
@@ -64,18 +64,19 @@ class BacklogController extends BaseController
         }
     }
 
+    protected function afterStore($backlog): void
+    {
+        $this->clearBacklogCache($backlog);
+    }
+
+    protected function afterUpdate($backlog): void
+    {
+        $this->clearBacklogCache($backlog);
+    }
+
     protected function afterDestroy($backlog): void
     {
-        $keys = [
-            'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
-            'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $backlog->Backlog_ID,
-        ];
-
-        Cache::deleteMultiple($keys);
-
-        if ($backlog->Project_ID) {
-            Cache::forget("backlogs:project:{$backlog->Project_ID}");
-        }
+        $this->clearBacklogCache($backlog);
     }
 
     /**

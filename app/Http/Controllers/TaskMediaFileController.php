@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TaskMediaFile;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
@@ -41,24 +42,44 @@ class TaskMediaFileController extends BaseController
         ];
     }
 
-    private function clearTaskCache(int $taskId): void
+    protected function clearTaskCache($media): void
     {
-        Cache::forget("model:task:{$taskId}");
+        $modelName = Str::snake(class_basename($this->modelClass));
+        $keys = [
+            "model:{$modelName}:all",
+            "model:{$modelName}:{$media->Media_ID}"
+        ];
+
+        Cache::deleteMultiple($keys);
+
+        if ($media->Task_ID) {
+            $keys = [
+                "model:task:{$media->Task_ID}",
+                "media:task:{$media->Task_ID}"
+            ];
+
+            Cache::deleteMultiple($keys);
+        }
     }
 
-    /**
-     * Hook after deleting a media file.
-     *
-     * @param TaskMediaFile $mediaFile
-     * @return void
-     */
-    protected function afterDestroy($mediaFile): void
+    protected function afterStore($media): void
+    {
+        $this->clearTaskCache($media);
+    }
+
+    protected function afterUpdate($media): void
+    {
+        $this->clearTaskCache($media);
+    }
+
+    protected function afterDestroy($media): void
     {
         // Delete physical file
-        if (Storage::disk('public')->exists($mediaFile->Media_File_Path)) {
-            Storage::disk('public')->delete($mediaFile->Media_File_Path);
-            $this->clearTaskCache($mediaFile->Task_ID);
+        if (Storage::disk('public')->exists($media->Media_File_Path)) {
+            Storage::disk('public')->delete($media->Media_File_Path);
         }
+
+        $this->clearTaskCache($media);
     }
 
     /**
@@ -99,6 +120,8 @@ class TaskMediaFileController extends BaseController
             // Create a new TaskMediaFile record
             $mediaFile = TaskMediaFile::create($mediaFileData);
 
+            $this->afterStore($mediaFile);
+
             // Return a success response with the media file data
             return response()->json($mediaFile, 201);
         } else {
@@ -116,6 +139,14 @@ class TaskMediaFileController extends BaseController
      */
     public function getMediaFilesByTask(int $taskId): JsonResponse
     {
+        $cacheKey = "media:task:{$taskId}";
+        $cachedFiles = Cache::get($cacheKey);
+
+        if ($cachedFiles) {
+            $decodedFiles = json_decode($cachedFiles, true);
+            return response()->json($decodedFiles);
+        }
+
         $mediaFiles = TaskMediaFile::with($this->with)
             ->where('Task_ID', $taskId)
             ->get();
@@ -123,6 +154,8 @@ class TaskMediaFileController extends BaseController
         if ($mediaFiles->isEmpty()) {
             return response()->json(['message' => 'No media files found for this task'], 404);
         }
+
+        Cache::put($cacheKey, $mediaFiles->toJson(), 3600);
 
         return response()->json($mediaFiles);
     }

@@ -56,29 +56,34 @@ class TaskController extends BaseController
         ];
     }
 
-    /**
-     * Hook called after a resource is created.
-     */
+    protected function clearTaskCache($task): void
+    {
+        $modelName = Str::snake(class_basename($this->modelClass));
+        $keys = [
+            "model:{$modelName}:all",
+            "model:{$modelName}:{$task->Task_ID}"
+        ];
+
+        Cache::deleteMultiple($keys);
+
+        if ($task->Backlog_ID) {
+            Cache::forget("tasks:backlog:{$task->Backlog_ID}");
+        }
+    }
+
     protected function afterStore($task): void
     {
-        // Clear index cache
-        Cache::forget("model:tasksByBacklog:{$task->Backlog_ID}");
+        $this->clearTaskCache($task);
     }
 
-    /**
-     * Hook called after a resource is updated.
-     */
     protected function afterUpdate($task): void
     {
-        Cache::forget("model:tasksByBacklog:{$task->Backlog_ID}");
+        $this->clearTaskCache($task);
     }
 
-    /**
-     * Hook called after a resource is deleted.
-     */
     protected function afterDestroy($task): void
     {
-        Cache::forget("model:tasksByBacklog:{$task->Backlog_ID}");
+        $this->clearTaskCache($task);
     }
 
     /**
@@ -187,7 +192,7 @@ class TaskController extends BaseController
             if ($task) {
                 $task->update(array_filter($taskData));
                 $updatedTasks[] = $task;
-                Cache::forget("model:tasksByBacklog:{$task->Backlog_ID}");
+                Cache::forget("tasks:backlog:{$task->Backlog_ID}");
             }
         }
 
@@ -219,7 +224,7 @@ class TaskController extends BaseController
         foreach ($taskIds as $id) {
             $task = Task::withTrashed()->find($id);
             if ($task) {
-                Cache::forget("model:tasksByBacklog:{$task->Backlog_ID}");
+                Cache::forget("tasks:backlog:{$task->Backlog_ID}");
             }
         }
 

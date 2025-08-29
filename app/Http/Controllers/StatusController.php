@@ -46,9 +46,34 @@ class StatusController extends BaseController
         ];
     }
 
-    private function clearBacklogCache(int $backlogId): void
+    protected function clearStatusCache($status): void
     {
-        Cache::forget("model:backlog:{$backlogId}");
+        $modelName = Str::snake(class_basename($this->modelClass));
+        $keys = [
+            "model:{$modelName}:all",
+            "model:{$modelName}:{$status->Status_ID}",
+        ];
+
+        Cache::deleteMultiple($keys);
+
+        if ($status->Backlog_ID) {
+            Cache::forget("model:backlog:{$status->Backlog_ID}");
+        }
+    }
+
+    protected function afterStore($status): void
+    {
+        $this->clearStatusCache($status);
+    }
+
+    protected function afterUpdate($status): void
+    {
+        $this->clearStatusCache($status);
+    }
+
+    protected function afterDestroy($status): void
+    {
+        $this->clearStatusCache($status);
     }
 
     // OVERRIDE of the BaseController methods
@@ -83,9 +108,9 @@ class StatusController extends BaseController
         // Delete the status
         $statusToDelete->delete();
 
-        $this->refreshOrder($statusToDelete->Backlog_ID);
+        $this->refreshOrder($statusToDelete);
 
-        $this->clearBacklogCache($statusToDelete->Backlog_ID);
+        $this->clearStatusCache($statusToDelete);
 
         return response()->json([
             'message' => 'Status deleted successfully, and associated tasks reassigned to the default status.'
@@ -101,9 +126,9 @@ class StatusController extends BaseController
         /** @var \App\Models\Status $newStatus */
         $newStatus = $this->modelClass::create($validated);
 
-        $this->refreshOrder($newStatus->Backlog_ID);
+        $this->refreshOrder($newStatus);
 
-        $this->clearBacklogCache($newStatus->Backlog_ID);
+        $this->clearStatusCache($newStatus);
 
         // Return the newly created resource
         return response()->json($newStatus, 201);
@@ -168,7 +193,7 @@ class StatusController extends BaseController
         $status->save();
         $swapWith->save();
 
-        $this->refreshOrder($status->Backlog_ID);
+        $this->refreshOrder($status);
 
         return response()->json(['message' => 'Status order updated successfully']);
     }
@@ -180,10 +205,10 @@ class StatusController extends BaseController
      * @param  int  $id  The ID of one of the statuses in the backlog to refresh.
      * @return \Illuminate\Http\JsonResponse
      */
-    public function refreshOrder(int $backlogId)
+    public function refreshOrder(Status $status)
     {
         // Get all statuses for this backlog, grouped by role
-        $statuses = \App\Models\Status::where('Backlog_ID', $backlogId)->get();
+        $statuses = Status::where('Backlog_ID', $status->Backlog_ID)->get();
 
         $default = $statuses->firstWhere('Status_Is_Default', true);
         $closed = $statuses->firstWhere('Status_Is_Closed', true);
@@ -213,7 +238,7 @@ class StatusController extends BaseController
             $closed->save();
         }
 
-        $this->clearBacklogCache($backlogId);
+        $this->clearStatusCache($status);
     }
 
     /**
@@ -263,9 +288,9 @@ class StatusController extends BaseController
         $status->Status_Order = 1;
         $status->save();
 
-        $this->refreshOrder($status->Backlog_ID);
+        $this->refreshOrder($status);
 
-        $this->clearBacklogCache($backlogId);
+        $this->clearStatusCache($status);
 
         return response()->json(['message' => 'Default status assigned successfully.']);
     }
@@ -318,9 +343,9 @@ class StatusController extends BaseController
         $status->Status_Order = $highestOrder + 1;
         $status->save();
 
-        $this->refreshOrder($status->Backlog_ID);
+        $this->refreshOrder($status);
 
-        $this->clearBacklogCache($backlogId);
+        $this->clearStatusCache($status);
 
         return response()->json(['message' => 'Closed status assigned successfully.']);
     }
