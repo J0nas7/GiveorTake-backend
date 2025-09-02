@@ -2,13 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Backlog;
+use App\Models\Organisation;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskComment;
 use App\Models\TaskMediaFile;
+use App\Models\Team;
+use App\Models\TeamUserSeat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class UtilityController extends Controller
 {
@@ -19,15 +25,18 @@ class UtilityController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function globalSearch(int $userId, string $searchString): JsonResponse
+    public function globalSearch(string $searchString): JsonResponse
     {
         if (!$searchString) {
             return response()->json(['error' => 'Search string is required.'], 400);
         }
 
-        if (!$userId) {
-            return response()->json(['error' => 'User ID is required.'], 400);
+        /** @var \App\Models\User|null $user */
+        $user = Auth::guard('api')->user();
+        if (!$user) {
+            return response()->json(['error' => 'User is required.'], 400);
         }
+        $userId = $user->User_ID;
 
         $results = [];
 
@@ -135,11 +144,6 @@ class UtilityController extends Controller
                 }
             }
 
-            // If the table has a User_ID column, filter the results by the User_ID
-            if ($hasUserIdColumn) {
-                $query->where('User_ID', $userId);
-            }
-
             // Execute the query
             $data = $query->get();
 
@@ -150,6 +154,146 @@ class UtilityController extends Controller
         }
 
         // Return the search results
+        return response()->json($results);
+    }
+
+    public function search(string $searchString): JsonResponse
+    {
+        if (!$searchString) {
+            return response()->json(['error' => 'Search string is required.'], 400);
+        }
+
+        $user = Auth::guard('api')->user();
+        if (!$user) {
+            return response()->json(['error' => 'User is required.'], 400);
+        }
+
+        // Get organisations where the user is the owner
+        $ownedOrganisations = Organisation::where('User_ID', $user->User_ID)->pluck('Organisation_ID');
+
+        // Get teams where the user is the owner of the organisation
+        $ownedTeams = Team::whereIn('Organisation_ID', $ownedOrganisations)->pluck('Team_ID');
+
+        // Get teams where the user has a seat
+        $teamsWithSeat = TeamUserSeat::where('User_ID', $user->User_ID)->pluck('Team_ID');
+
+        // Merge both sets of team IDs
+        $allowedTeamIds = $ownedTeams->merge($teamsWithSeat);
+
+        $results = [];
+
+        // Search in Organisations (that have a team with allowedTeamIds)
+        $tableName = "GT_Organisations";
+        $organisationColumns = Schema::getColumnListing($tableName);
+        $organisationResults = Organisation::whereIn('Organisation_ID', function ($query) use ($allowedTeamIds) {
+            $query->select('Organisation_ID')
+                ->from('GT_Teams')
+                ->whereIn('Team_ID', $allowedTeamIds);
+        })
+            ->where(function ($query) use ($organisationColumns, $searchString) {
+                foreach ($organisationColumns as $column) {
+                    $query->orWhere($column, 'like', "%{$searchString}%");
+                }
+            })
+            ->get();
+
+        if (!$organisationResults->isEmpty()) {
+            $results[$tableName] = $organisationResults;
+        }
+
+        // Search in Teams
+        $tableName = "GT_Teams";
+        $teamColumns = Schema::getColumnListing($tableName);
+        $teamResults = Team::whereIn('Team_ID', $allowedTeamIds)
+            ->where(function ($query) use ($teamColumns, $searchString) {
+                foreach ($teamColumns as $column) {
+                    $query->orWhere($column, 'like', "%{$searchString}%");
+                }
+            })
+            ->get();
+
+        if (!$teamResults->isEmpty()) {
+            $results[$tableName] = $teamResults;
+        }
+
+        // Search in Projects
+        $tableName = "GT_Projects";
+        $projectColumns = Schema::getColumnListing($tableName);
+        $projectResults = Project::whereIn('Team_ID', $allowedTeamIds)
+            ->where(function ($query) use ($projectColumns, $searchString) {
+                foreach ($projectColumns as $column) {
+                    $query->orWhere($column, 'like', "%{$searchString}%");
+                }
+            })
+            ->get();
+        if (!$projectResults->isEmpty()) {
+            $results[$tableName] = $projectResults;
+        }
+
+        // Search in Backlogs
+        $tableName = "GT_Backlogs";
+        $backlogColumns = Schema::getColumnListing($tableName);
+        $backlogResults = Backlog::whereIn('Team_ID', $allowedTeamIds)
+            ->where(function ($query) use ($backlogColumns, $searchString) {
+                foreach ($backlogColumns as $column) {
+                    $query->orWhere($column, 'like', "%{$searchString}%");
+                }
+            })
+            ->get();
+        if (!$backlogResults->isEmpty()) {
+            $results[$tableName] = $backlogResults;
+        }
+
+        // Search in Tasks
+        $tableName = "GT_Tasks";
+        $taskColumns = Schema::getColumnListing($tableName);
+        $taskResults = Task::with('backlog.project', 'status', 'user')
+            ->whereIn('Team_ID', $allowedTeamIds)
+            ->where(function ($query) use ($taskColumns, $searchString) {
+                foreach ($taskColumns as $column) {
+                    $query->orWhere($column, 'like', "%{$searchString}%");
+                }
+            })
+            ->get();
+        if (!$taskResults->isEmpty()) {
+            $results[$tableName] = $taskResults;
+        }
+
+        // Search in TaskMediaFiles
+        $tableName = "GT_Task_Media_Files";
+        $taskMediaFileColumns = Schema::getColumnListing($tableName);
+        $taskMediaFileResults = TaskMediaFile::with('task.backlog.project')
+            ->whereIn('Task_ID', function ($query) use ($allowedTeamIds) {
+                $query->select('Task_ID')->from('GT_Tasks')->whereIn('Team_ID', $allowedTeamIds);
+            })
+            ->where(function ($query) use ($taskMediaFileColumns, $searchString) {
+                foreach ($taskMediaFileColumns as $column) {
+                    $query->orWhere($column, 'like', "%{$searchString}%");
+                }
+            })
+            ->get();
+        if (!$taskMediaFileResults->isEmpty()) {
+            $results[$tableName] = $taskMediaFileResults;
+        }
+
+        // Search in TaskComments
+        $tableName = "GT_Task_Comments";
+        $taskCommentColumns = Schema::getColumnListing($tableName);
+        $taskCommentResults = TaskComment::with('task.backlog.project')
+            ->whereIn('Task_ID', function ($query) use ($allowedTeamIds) {
+                $query->select('Task_ID')->from('GT_Tasks')->whereIn('Team_ID', $allowedTeamIds);
+            })
+            ->where(function ($query) use ($taskCommentColumns, $searchString) {
+                foreach ($taskCommentColumns as $column) {
+                    $query->orWhere($column, 'like', "%{$searchString}%");
+                }
+            })
+            ->get();
+
+        if (!$taskCommentResults->isEmpty()) {
+            $results[$tableName] = $taskCommentResults;
+        }
+
         return response()->json($results);
     }
 }

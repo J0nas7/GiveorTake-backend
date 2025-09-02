@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\TeamUserSeat;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Cache;
 
 class TeamUserSeatController extends BaseController
@@ -27,22 +27,39 @@ class TeamUserSeatController extends BaseController
         ];
     }
 
-    protected function afterStore($resource): void
+    protected function clearTeamSeatCache($teamUserSeat): void
     {
-        // Clear team-specific cache
-        Cache::forget("team:{$resource->Team_ID}:seats");
+        $modelName = Str::snake(class_basename($this->modelClass));
+        $keys = [
+            "model:{$modelName}:all",
+            "model:{$modelName}:{$teamUserSeat->Team_ID}"
+        ];
+
+        Cache::deleteMultiple($keys);
+
+        if ($teamUserSeat->Team_ID) {
+            $keys = [
+                "model:team:{$teamUserSeat->Team_ID}",
+                "seats:team:{$teamUserSeat->Team_ID}"
+            ];
+
+            Cache::deleteMultiple($keys);
+        }
     }
 
-    protected function afterUpdate($resource): void
+    protected function afterStore($teamUserSeat): void
     {
-        // Clear team-specific cache
-        Cache::forget("team:{$resource->Team_ID}:seats");
+        $this->clearTeamSeatCache($teamUserSeat);
     }
 
-    protected function afterDestroy($resource): void
+    protected function afterUpdate($teamUserSeat): void
     {
-        // Clear team-specific cache
-        Cache::forget("team:{$resource->Team_ID}:seats");
+        $this->clearTeamSeatCache($teamUserSeat);
+    }
+
+    protected function afterDestroy($teamUserSeat): void
+    {
+        $this->clearTeamSeatCache($teamUserSeat);
     }
 
     /**
@@ -50,7 +67,7 @@ class TeamUserSeatController extends BaseController
      */
     public function getTeamUserSeatsByTeamId(int $teamId)
     {
-        $cacheKey = "team:{$teamId}:seats";
+        $cacheKey = "seats:team:{$teamId}";
         $cached = Cache::get($cacheKey);
         if ($cached) {
             $decodedData = json_decode($cached, true);
@@ -96,7 +113,8 @@ class TeamUserSeatController extends BaseController
         $seat->update($validated);
 
         // Clear team-specific cache
-        Cache::forget("team:{$seat->Team_ID}:seats");
+        $cacheKey = "seats:team:{$seat->Team_ID}";
+        Cache::forget($cacheKey);
 
         return response()->json($seat);
     }
@@ -123,7 +141,8 @@ class TeamUserSeatController extends BaseController
         $seat->delete();
 
         // Clear team-specific cache
-        Cache::forget("team:{$seat->Team_ID}:seats");
+        $cacheKey = "seats:team:{$seat->Team_ID}";
+        Cache::forget($cacheKey);
 
         return response()->json(['message' => 'Seat deleted successfully']);
     }

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Team;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
@@ -47,31 +46,39 @@ class TeamController extends BaseController
         ];
     }
 
-    /**
-     * Optional: Actions after update.
-     */
-    protected function afterUpdate($team): void
+    protected function clearTeamCache($team): void
     {
-        // Invalidate cache if using Cache for caching teams
+        $modelName = Str::snake(class_basename($this->modelClass));
         $keys = [
-            "teams:organisation:{$team->Organisation_ID}",
-            'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
-            'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $team->Team_ID,
+            "model:{$modelName}:all",
+            "model:{$modelName}:{$team->Team_ID}"
         ];
+
         Cache::deleteMultiple($keys);
+
+        if ($team->Organisation_ID) {
+            $keys = [
+                "model:organisation:{$team->Organisation_ID}",
+                "teams:organisation:{$team->Organisation_ID}"
+            ];
+
+            Cache::deleteMultiple($keys);
+        }
     }
 
-    /**
-     * Optional: Actions after destroy.
-     */
+    protected function afterStore($team): void
+    {
+        $this->clearTeamCache($team);
+    }
+
+    protected function afterUpdate($team): void
+    {
+        $this->clearTeamCache($team);
+    }
+
     protected function afterDestroy($team): void
     {
-        $keys = [
-            "teams:organisation:{$team->Organisation_ID}",
-            'model:' . Str::snake(class_basename($this->modelClass)) . ':all',
-            'model:' . Str::snake(class_basename($this->modelClass)) . ':' . $team->Team_ID,
-        ];
-        Cache::deleteMultiple($keys);
+        $this->clearTeamCache($team);
     }
 
     /**

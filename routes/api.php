@@ -148,7 +148,7 @@ Route::group(['middleware' => ['auth:api', UserOnly::class]], function () {
 
     // UtilityController Routes
     // Custom route to get global search results
-    Route::get('search/{userId}/{searchString}', [UtilityController::class, 'globalSearch']);
+    Route::get('search/{searchString}', [UtilityController::class, 'search']);
 });
 
 
