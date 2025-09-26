@@ -1,17 +1,17 @@
 <?php
 
 /*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| This file defines API routes for the application.
-| - `apiResource()` is used for standard CRUD operations:
-    GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
-    apiResource handles all these CRUD routes
-| - Custom routes are added below their corresponding resource.
-| - Routes are grouped by middleware and functionality.
-|
+    |--------------------------------------------------------------------------
+    | API Routes
+    |--------------------------------------------------------------------------
+    |
+    | This file defines API routes for the application.
+    | - `apiResource()` is used for standard CRUD operations:
+        GET (index) - POST (store) - GET (show) - PUT (update) - DELETE (destroy)
+        apiResource handles all these CRUD routes
+    | - Custom routes are added below their corresponding resource.
+    | - Routes are grouped by middleware and functionality.
+    |
 */
 
 use App\Http\Controllers\AuthController;
@@ -44,15 +44,15 @@ Route::group(['middleware' => $privateApiMiddleware], function () {
 
     // ---- OrganisationController Routes ----
     Route::apiResource('organisations', OrganisationController::class);
-    // Custom route to get organisations by user ID
     Route::prefix('organisations')->group(function () {
+        // Custom route to get organisations by user ID
         Route::get('users/{user}', [OrganisationController::class, 'getOrganisationsByUser']);
     });
 
     // ---- TeamController Routes ----
     Route::apiResource('teams', TeamController::class);
-    // Custom route to get teams by organisation ID
     Route::prefix('teams')->group(function () {
+        // Custom route to get teams by organisation ID
         Route::get('organisations/{organisation}', [TeamController::class, 'getTeamsByOrganisation']);
     });
 
@@ -70,15 +70,14 @@ Route::group(['middleware' => $privateApiMiddleware], function () {
     });
 
     Route::prefix('team-roles')->group(function () {
-        // Custom route to delete all roles and permissions by role ID
-        Route::delete('{role}', [TeamUserSeatController::class, 'destroyTeamRole'])
-            ->middleware(['auth:api', 'check.permission:Manage Team Members']);
-        // Custom route creates a team role by team ID.
-        Route::post('', [TeamUserSeatController::class, 'storeTeamRole'])
-            ->middleware(['auth:api', 'check.permission:Manage Team Members']);
-        // Custom route updates a team role by its ID.
-        Route::put('{role}', [TeamUserSeatController::class, 'updateTeamRole'])
-            ->middleware(['auth:api', 'check.permission:Manage Team Members']);
+        Route::middleware(['check.permission:Manage Team Members'])->group(function () {
+            // Custom route to delete all roles and permissions by role ID
+            Route::delete('{role}', [TeamUserSeatController::class, 'destroyTeamRole']);
+            // Custom route creates a team role by team ID.
+            Route::post('', [TeamUserSeatController::class, 'storeTeamRole']);
+            // Custom route updates a team role by its ID.
+            Route::put('{role}', [TeamUserSeatController::class, 'updateTeamRole']);
+        });
     });
 
     // ---- ProjectController Routes ----
@@ -98,21 +97,21 @@ Route::group(['middleware' => $privateApiMiddleware], function () {
     });
 
     // ---- StatusController Routes ----
-    Route::apiResource('status', StatusController::class);
+    Route::apiResource('statuses', StatusController::class);
     Route::prefix('statuses')->group(function () {
         // Adjust the Status_Order of a given Status by moving it up or down within its backlog.
-        Route::post('{statusId}/move-order', [StatusController::class, 'moveOrder']);
+        Route::post('{status}/move-order', [StatusController::class, 'moveOrder']);
         // Assign the given status as the default for its backlog.
-        Route::post('{statusId}/assign-default', [StatusController::class, 'assignDefault']);
+        Route::post('{status}/assign-default', [StatusController::class, 'assignDefault']);
         // Assign the given status as the closed for its backlog.
-        Route::post('{statusId}/assign-closed', [StatusController::class, 'assignClosed']);
+        Route::post('{status}/assign-closed', [StatusController::class, 'assignClosed']);
     });
 
     // ---- TaskController Routes ----
     Route::apiResource('tasks', TaskController::class);
     Route::prefix('tasks')->group(function () {
         // Custom route to get tasks by backlog ID
-        Route::get('backlogs/{backlogId}', [TaskController::class, 'getTasksByBacklog']);
+        Route::get('backlogs/{backlog}', [TaskController::class, 'getTasksByBacklog']);
         // Custom route to bulk-delete tasks by array of IDs
         Route::post('bulk-destroy', [TaskController::class, 'bulkDestroy']);
         // Custom route to bulk-update tasks by array of data
@@ -125,25 +124,25 @@ Route::group(['middleware' => $privateApiMiddleware], function () {
     Route::apiResource('task-time-tracks', TaskTimeTrackController::class);
     Route::prefix('task-time-tracks')->group(function () {
         // Custom route to get task-time-tracks by task ID
-        Route::get('tasks/{taskId}', [TaskTimeTrackController::class, 'getTaskTimeTracksByTask']);
+        Route::get('tasks/{task}', [TaskTimeTrackController::class, 'getTaskTimeTracksByTask']);
         // Custom route to get task-time-tracks by backlog ID
-        Route::get('projects/{projectId}', [TaskTimeTrackController::class, 'getTaskTimeTracksByProject']);
+        Route::get('projects/{project}', [TaskTimeTrackController::class, 'getTaskTimeTracksByProject']);
         // Custom route to get the 10 latest unique TaskTimeTracks by project ID
-        Route::get('latest/projects/{projectId}', [TaskTimeTrackController::class, 'getLatestUniqueTaskTimeTracksByBacklog']);
+        Route::get('latest/backlogs/{backlog}', [TaskTimeTrackController::class, 'getLatestUniqueTaskTimeTracksByBacklog']);
     });
 
     // ---- TaskCommentController Routes ----
     Route::apiResource('task-comments', TaskCommentController::class);
     Route::prefix('task-comments')->group(function () {
         // Custom route to get task-comments by task ID
-        Route::get('tasks/{taskId}', [TaskCommentController::class, 'getCommentsByTask']);
+        Route::get('tasks/{task}', [TaskCommentController::class, 'getCommentsByTask']);
     });
 
     // ---- TaskMediaFileController Routes ----
     Route::apiResource('task-media-files', TaskMediaFileController::class);
     Route::prefix('task-media-files')->group(function () {
         // Custom route to get task-media-files by task ID
-        Route::get('tasks/{taskId}', [TaskMediaFileController::class, 'getMediaFilesByTask']);
+        Route::get('tasks/{task}', [TaskMediaFileController::class, 'getMediaFilesByTask']);
     });
 
     // ---- UtilityController Routes ----
@@ -157,30 +156,28 @@ Route::group(['middleware' => $publicApiMiddleware], function () {
         echo "test";
     });
 
-    /**
-     * AuthController Routes
-     */
-    Route::group(['middleware' => ['api']], function () {
+    // ---- AuthController Routes ----
+    Route::prefix('auth')->group(function () {
         // Register a new user
-        Route::post('/auth/register', [AuthController::class, 'register'])->name('auth.register');
+        Route::post('register', [AuthController::class, 'register'])->name('auth.register');
 
         // Login and generate JWT
-        Route::post('/auth/login', [AuthController::class, 'login'])->name('login');
+        Route::post('login', [AuthController::class, 'login'])->name('login');
 
-        Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+        Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
 
-        Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+        Route::post('reset-password', [AuthController::class, 'resetPassword']);
 
         // Clone the token for the authenticated user
-        Route::post('/auth/clone-token', [AuthController::class, 'cloneToken']);
+        Route::post('clone-token', [AuthController::class, 'cloneToken']);
 
         // Logout the authenticated user
-        Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
+        Route::post('logout', [AuthController::class, 'logout'])->name('auth.logout');
 
         // Get authenticated user details (requires authentication)
-        Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth:api')->name('auth.me');
+        Route::get('me', [AuthController::class, 'me'])->middleware('auth:api')->name('auth.me');
 
         // Get authenticated user details (requires authentication)
-        Route::get('/auth/refreshJWT', [AuthController::class, 'refreshJWT'])->middleware('auth:api');
+        Route::get('refreshJWT', [AuthController::class, 'refreshJWT'])->middleware('auth:api');
     });
 });

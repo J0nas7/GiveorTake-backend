@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\TaskTimeTrack;
 use App\Models\Backlog;
+use App\Models\Project;
+use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -93,12 +95,12 @@ class TaskTimeTrackController extends BaseController
     /**
      * Get time tracks by Task ID.
      *
-     * @param int $taskId
+     * @param Task $task
      * @return JsonResponse
      */
-    public function getTaskTimeTracksByTask(int $taskId): JsonResponse
+    public function getTaskTimeTracksByTask(Task $task): JsonResponse
     {
-        $cacheKey = "timetracks:task:{$taskId}";
+        $cacheKey = "timetracks:task:{$task->Task_ID}";
         $cachedTimeTracks = Cache::get($cacheKey);
 
         if ($cachedTimeTracks) {
@@ -107,7 +109,7 @@ class TaskTimeTrackController extends BaseController
         }
 
         $timeTracks = TaskTimeTrack::with($this->with)
-            ->where('Task_ID', $taskId)
+            ->where('Task_ID', $task->Task_ID)
             ->get();
 
         if ($timeTracks->isEmpty()) {
@@ -122,10 +124,10 @@ class TaskTimeTrackController extends BaseController
     /**
      * Get the latest 10 unique task time tracks for a backlog.
      *
-     * @param int $backlogId
+     * @param Backlog $backlog
      * @return JsonResponse
      */
-    public function getLatestUniqueTaskTimeTracksByBacklog(int $backlogId): JsonResponse
+    public function getLatestUniqueTaskTimeTracksByBacklog(Backlog $backlog): JsonResponse
     {
         /** @var \App\Models\User|null $user */
         $user = Auth::guard('api')->user();
@@ -139,8 +141,8 @@ class TaskTimeTrackController extends BaseController
         }
 
         $latestTimeTracks = TaskTimeTrack::where('User_ID', $user->User_ID)
-            ->whereHas('task', function ($query) use ($backlogId) {
-                $query->where('Backlog_ID', $backlogId);
+            ->whereHas('task', function ($query) use ($backlog) {
+                $query->where('Backlog_ID', $backlog->Backlog_ID);
             })
             ->with('task')
             ->orderBy('Time_Tracking_Start_Time', 'desc')
@@ -156,11 +158,11 @@ class TaskTimeTrackController extends BaseController
     /**
      * Get time tracks by Project ID with optional filtering.
      *
-     * @param int $projectId
+     * @param Project $project
      * @param Request $request
      * @return JsonResponse
      */
-    public function getTaskTimeTracksByProject(int $projectId, Request $request): JsonResponse
+    public function getTaskTimeTracksByProject(Project $project, Request $request): JsonResponse
     {
         $startTime = $request->query('startTime');
         $endTime = $request->query('endTime');
@@ -170,7 +172,7 @@ class TaskTimeTrackController extends BaseController
         }
 
         // Generate a flexible cache key
-        $cacheKey = $this->generateCacheKey($projectId, $request);
+        $cacheKey = $this->generateCacheKey($project->Project_ID, $request);
 
         // Try to get the cached data
         $cachedData = Cache::get($cacheKey);
@@ -184,7 +186,7 @@ class TaskTimeTrackController extends BaseController
         $taskIds = $request->query('taskIds');
 
         $allTimeTracks = [];
-        $backlogs = Backlog::where('Project_ID', $projectId)->get();
+        $backlogs = Backlog::where('Project_ID', $project->Project_ID)->get();
 
         foreach ($backlogs as $backlog) {
             $query = TaskTimeTrack::where('Backlog_ID', $backlog->Backlog_ID)

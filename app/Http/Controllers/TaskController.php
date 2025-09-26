@@ -126,11 +126,14 @@ class TaskController extends BaseController
 
     /**
      * Get tasks by Backlog ID.
+     *
+     * @param Backlog $backlog
+     * @return JsonResponse
      */
-    public function getTasksByBacklog(int $backlogId): JsonResponse
+    public function getTasksByBacklog(Backlog $backlog): JsonResponse
     {
         $tasks = Task::with($this->with)
-            ->where('Backlog_ID', $backlogId)
+            ->where('Backlog_ID', $backlog->Backlog_ID)
             ->whereNull('Parent_Task_ID')
             ->get();
 

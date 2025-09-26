@@ -138,25 +138,16 @@ class StatusController extends BaseController
     /**
      * Adjust the Status_Order of a given Status by moving it up or down within its backlog.
      *
-     * @param  int    $id        The ID of the status to move.
-     * @param  string $direction The direction to move: "up" or "down".
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @param Status $status
+     * @param string $direction The direction to move: "up" or "down".
+     * @return JsonResponse
      */
-    public function moveOrder(int $statusId, Request $request): JsonResponse
+    public function moveOrder(Status $status, Request $request): JsonResponse
     {
         $direction = $request->input('direction');
 
         if (!in_array($direction, ['up', 'down'])) {
             return response()->json(['message' => 'Invalid direction provided.'], 422);
-        }
-
-        // Fetch the current status
-        /** @var \App\Models\Status $status */
-        $status = \App\Models\Status::find($statusId);
-
-        if (!$status) {
-            return response()->json(['message' => 'Status not found'], 404);
         }
 
         // Prevent movement for default or closed statuses
@@ -179,7 +170,7 @@ class StatusController extends BaseController
         }
 
         // Find the other status to swap with
-        $swapWith = \App\Models\Status::where('Backlog_ID', $backlogId)
+        $swapWith = Status::where('Backlog_ID', $backlogId)
             ->where('Status_Order', $targetOrder)
             ->first();
 
@@ -251,18 +242,11 @@ class StatusController extends BaseController
      *   - Sets Status_Is_Default = false.
      *   - Assigns it the old Status_Order of the new default.
      *
-     * @param  int  $id  The ID of the status to assign as default.
-     * @return \Illuminate\Http\JsonResponse
+     * @param Status $status
+     * @return JsonResponse
      */
-    public function assignDefault(int $statusId): JsonResponse
+    public function assignDefault(Status $status): JsonResponse
     {
-        /** @var \App\Models\Status $status */
-        $status = \App\Models\Status::find($statusId);
-
-        if (!$status) {
-            return response()->json(['message' => 'Status not found'], 404);
-        }
-
         if ($status->Status_Is_Closed) {
             return response()->json(['message' => 'Closed statuses cannot be set as default'], 422);
         }
@@ -305,18 +289,11 @@ class StatusController extends BaseController
      *   - Sets Status_Is_Closed = false.
      *   - Assigns it the old Status_Order of the new closed status.
      *
-     * @param  int  $id  The ID of the status to assign as closed.
-     * @return \Illuminate\Http\JsonResponse
+     * @param Status $status
+     * @return JsonResponse
      */
-    public function assignClosed(int $statusId): JsonResponse
+    public function assignClosed(Status $status): JsonResponse
     {
-        /** @var \App\Models\Status $status */
-        $status = \App\Models\Status::find($statusId);
-
-        if (!$status) {
-            return response()->json(['message' => 'Status not found'], 404);
-        }
-
         if ($status->Status_Is_Default) {
             return response()->json(['message' => 'Default statuses cannot be set as closed'], 422);
         }

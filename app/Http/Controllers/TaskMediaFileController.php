@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Task;
 use App\Models\TaskMediaFile;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -134,12 +135,12 @@ class TaskMediaFileController extends BaseController
     /**
      * Get media files by Task ID.
      *
-     * @param int $taskId
+     * @param Task $task
      * @return JsonResponse
      */
-    public function getMediaFilesByTask(int $taskId): JsonResponse
+    public function getMediaFilesByTask(Task $task): JsonResponse
     {
-        $cacheKey = "media:task:{$taskId}";
+        $cacheKey = "media:task:{$task->Task_ID}";
         $cachedFiles = Cache::get($cacheKey);
 
         if ($cachedFiles) {
@@ -148,7 +149,7 @@ class TaskMediaFileController extends BaseController
         }
 
         $mediaFiles = TaskMediaFile::with($this->with)
-            ->where('Task_ID', $taskId)
+            ->where('Task_ID', $task->Task_ID)
             ->get();
 
         if ($mediaFiles->isEmpty()) {

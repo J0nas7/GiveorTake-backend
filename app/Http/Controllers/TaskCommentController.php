@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Task;
 use App\Models\TaskComment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -81,12 +82,12 @@ class TaskCommentController extends BaseController
     /**
      * Get comments by Task ID.
      *
-     * @param int $taskId
+     * @param Task $task
      * @return JsonResponse
      */
-    public function getCommentsByTask(int $taskId): JsonResponse
+    public function getCommentsByTask(Task $task): JsonResponse
     {
-        $cacheKey = "comments:task:{$taskId}";
+        $cacheKey = "comments:task:{$task->Task_ID}";
         $cachedComments = Cache::get($cacheKey);
 
         if ($cachedComments) {
@@ -95,7 +96,7 @@ class TaskCommentController extends BaseController
         }
 
         $comments = TaskComment::with(['childrenComments', 'parentComment'])
-            ->where('Task_ID', $taskId)
+            ->where('Task_ID', $task->Task_ID)
             ->get();
 
         if ($comments->isEmpty()) {
