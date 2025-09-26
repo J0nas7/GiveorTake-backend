@@ -25,6 +25,7 @@ return [
         'https://giveortake-nextjs-frontend.ey.r.appspot.com',
         'https://nsgiveortakenextjsfr83wtqlnv-container-giveortake-nextjs-fronte.functions.fnc.fr-par.scw.cloud',
         'https://giveortake.jonas-alexander.dk',
+        'https://giveortake-nextjs-frontend-3kv8zehgn-j0nas7s-projects.vercel.app',
     ],
 
     'allowed_origins_patterns' => [],

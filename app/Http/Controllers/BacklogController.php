@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Backlog;
+use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -82,12 +83,12 @@ class BacklogController extends BaseController
     /**
      * Display a listing of backlogs based on Project ID.
      *
-     * @param int $projectId
+     * @param Project $project
      * @return JsonResponse
      */
-    public function getBacklogsByProject(int $projectId): JsonResponse
+    public function getBacklogsByProject(Project $project): JsonResponse
     {
-        $cacheKey = "backlogs:project:{$projectId}";
+        $cacheKey = "backlogs:project:{$project->Project_ID}";
         $cachedBacklogs = Cache::get($cacheKey);
 
         if ($cachedBacklogs) {
@@ -95,7 +96,7 @@ class BacklogController extends BaseController
             return response()->json($decodedBacklogs);
         }
 
-        $backlogs = Backlog::where('Project_ID', $projectId)->get();
+        $backlogs = Backlog::where('Project_ID', $project->Project_ID)->get();
 
         if ($backlogs->isEmpty()) {
             return response()->json(['message' => 'No backlogs found for this project'], 404);
@@ -106,14 +107,16 @@ class BacklogController extends BaseController
         return response()->json($backlogs);
     }
 
-    public function finishBacklog(Request $request, int $backlogId): JsonResponse
+    /**
+     * Soft-deletion of a backlog.
+     *
+     * @param  Request $request
+     * @param  Backlog $backlog
+     * @return JsonResponse
+     */
+    public function finishBacklog(Request $request, Backlog $backlog): JsonResponse
     {
-
-        $backlog = Backlog::find($backlogId);
-
-        if (!$backlog) {
-            return response()->json(['message' => 'Backlog not found'], 404);
-        }
+        $backlog->load("tasks");
 
         $request->validate([
             'moveAction' => 'required|in:move-to-primary,move-to-new,move-to-existing',

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Organisation;
 use App\Models\Team;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
@@ -84,13 +85,13 @@ class TeamController extends BaseController
     /**
      * Display a listing of teams based on Organisation ID.
      *
-     * @param int $organisationId
+     * @param Organisation $organisation
      * @return JsonResponse
      */
-    public function getTeamsByOrganisation(int $organisationId): JsonResponse
+    public function getTeamsByOrganisation(Organisation $organisation): JsonResponse
     {
         // Try to get from Cache
-        $cacheKey = "teams:organisation:{$organisationId}";
+        $cacheKey = "teams:organisation:{$organisation->Organisation_ID}";
         $cachedData = Cache::get($cacheKey);
         if ($cachedData) {
             $decodedData = json_decode($cachedData, true);
@@ -98,7 +99,7 @@ class TeamController extends BaseController
         }
 
         $teams = Team::with($this->with)
-            ->where('Organisation_ID', $organisationId)
+            ->where('Organisation_ID', $organisation->Organisation_ID)
             ->get();
 
         if ($teams->isEmpty()) {

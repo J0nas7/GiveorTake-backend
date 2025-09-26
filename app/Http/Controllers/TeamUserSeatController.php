@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\Team;
 use App\Models\TeamUserSeat;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -63,18 +67,66 @@ class TeamUserSeatController extends BaseController
     }
 
     /**
-     * Get all seats for a given team, bypassing BaseController caching for flexibility.
+     * Find a seat based on Team ID and User ID.
+     *
+     * @param Team $team
+     * @param User $user
+     * @return JsonResponse
      */
-    public function getTeamUserSeatsByTeamId(int $teamId)
+    public function findByTeamAndUser(Team $team, User $user): JsonResponse
     {
-        $cacheKey = "seats:team:{$teamId}";
+        // Search for the seat based on Team ID and User ID
+        $seat = TeamUserSeat::where('Team_ID', $team->Team_ID)
+            ->where('User_ID', $user->User_ID)
+            ->first(); // Get the first matching seat (there should be one or none)
+
+        if (!$seat) {
+            // Return 404 if no seat is found
+            return response()->json(['message' => 'Seat not found for the specified team and user'], 404);
+        }
+
+        // Return the seat as JSON if found
+        return response()->json($seat);
+    }
+
+    /**
+     * Find all teams assigned to a specific user based on the User ID.
+     *
+     * @param User $user
+     * @return JsonResponse
+     */
+    public function findTeamsByUserID(User $user): JsonResponse
+    {
+        // Get all the teams where the user is assigned a seat
+        $seats = TeamUserSeat::where('User_ID', $user->User_ID)
+            ->with(['team.organisation', 'team.projects']) // Eager load the related Team, Organisation and Projects model
+            ->get();
+
+        if ($seats->isEmpty()) {
+            // Return 404 if no teams are found for the user
+            return response()->json(['message' => 'No teams found for the specified user'], 404);
+        }
+
+        // Return all teams associated with the user as JSON
+        return response()->json($seats);
+    }
+
+    /**
+     * Get all seats for a given team, bypassing BaseController caching for flexibility.
+     *
+     * @param Team $team
+     * @return JsonResponse
+     */
+    public function getTeamUserSeatsByTeamId(Team $team)
+    {
+        $cacheKey = "seats:team:{$team->Team_ID}";
         $cached = Cache::get($cacheKey);
         if ($cached) {
             $decodedData = json_decode($cached, true);
             return response()->json($decodedData);
         }
 
-        $seats = $this->modelClass::where('Team_ID', $teamId)
+        $seats = $this->modelClass::where('Team_ID', $team->Team_ID)
             ->with($this->with)
             ->get();
 
@@ -85,6 +137,128 @@ class TeamUserSeatController extends BaseController
         Cache::put($cacheKey, $seats->toJson(), 3600);
 
         return response()->json($seats);
+    }
+
+    /**
+     * Retrieve all roles associated with a specific team by its ID.
+     *
+     * @param Team $team
+     * @return JsonResponse
+     */
+    public function getRolesAndPermissionsByTeamId(Team $team): JsonResponse
+    {
+        // Retrieve all roles for the specified team, eager loading permissions
+        $roles = Role::where('Team_ID', $team->Team_ID)
+            ->with('permissions') // Eager load permissions
+            ->get();
+
+        if ($roles->isEmpty()) {
+            return response()->json(['message' => 'No roles found for the specified team'], 404);
+        }
+
+        return response()->json($roles);
+    }
+
+    /**
+     * Remove a role and its associated permissions by role ID.
+     *
+     * @param Role $role
+     * @return JsonResponse
+     */
+    public function destroyTeamRole(Role $role): JsonResponse
+    {
+        $role->load('permissions');
+
+        // Detach related permissions via pivot table
+        $role->permissions()->detach();
+
+        // Clear team-specific cache
+        $cacheKey = "team:{$role->Team_ID}:seats";
+        Cache::forget($cacheKey);
+
+        $role->delete();
+
+        return response()->json(['message' => 'Role and associated permissions removed successfully.']);
+    }
+
+    /**
+     * Store a newly created team role and assign permissions.
+     *
+     * @param  \Illuminate\Http\Request  $request  The HTTP request containing role data.
+     * @return \Illuminate\Http\JsonResponse  JSON response with creation status and role data
+     *
+     * @throws \Illuminate\Validation\ValidationException If validation fails.
+     */
+    public function storeTeamRole(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'Team_ID' => 'required|exists:GT_Teams,Team_ID',
+            'Role_Name' => 'required|string|max:255',
+            'Role_Description' => 'nullable|string|max:500',
+            'permissions' => 'nullable|array',
+            'permissions.*.Permission_Key' => 'required|string'
+        ]);
+
+        // Create the new role
+        $role = Role::create([
+            'Team_ID' => $validated['Team_ID'],
+            'Role_Name' => $validated['Role_Name'],
+            'Role_Description' => $validated['Role_Description'] ?? null,
+        ]);
+
+        // If permissions are provided, attach them
+        if (!empty($validated['permissions'])) {
+            $permissionKeys = collect($validated['permissions'])->pluck('Permission_Key')->all();
+            $permissionIds = Permission::whereIn('Permission_Key', $permissionKeys)->pluck('Permission_ID')->toArray();
+
+            // Attach permissions to the role
+            $role->permissions()->sync($permissionIds);
+        }
+
+        return response()->json([
+            'message' => 'Role created successfully.',
+            'role' => $role->load('permissions'),
+        ], 201);
+    }
+
+    /**
+     * Update the specified team role and its permissions.
+     *
+     * @param  Request $request
+     * @param  Role $role
+     * @return JsonResponse
+     */
+    public function updateTeamRole(Request $request, Role $role): JsonResponse
+    {
+        $validated = $request->validate([
+            'Team_ID' => 'required|exists:GT_Teams,Team_ID',
+            'Role_Name' => 'required|string|max:255',
+            'Role_Description' => 'nullable|string|max:500',
+            'permissions' => 'nullable|array',
+            'permissions.*.Permission_Key' => 'required|string'
+        ]);
+
+        // Update Role info
+        $role->update([
+            'Team_ID' => $validated['Team_ID'],
+            'Role_Name' => $validated['Role_Name'],
+            'Role_Description' => $validated['Role_Description'] ?? null,
+        ]);
+
+        // Process permissions array (extract keys and fetch Permission_IDs)
+        if (!empty($validated['permissions'])) {
+            $permissionKeys = collect($validated['permissions'])->pluck('Permission_Key')->all();
+            $permissionIds = Permission::whereIn('Permission_Key', $permissionKeys)->pluck('Permission_ID')->toArray();
+
+            // Sync the permissions
+            $role->permissions()->sync($permissionIds);
+        }
+
+        // Clear team-specific cache
+        $cacheKey = "team:{$role->Team_ID}:seats";
+        Cache::forget($cacheKey);
+
+        return response()->json($role->load('permissions'));
     }
 
     /**

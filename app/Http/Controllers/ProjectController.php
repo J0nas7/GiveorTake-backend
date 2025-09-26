@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\PermissionHelper;
 use App\Models\Project;
+use App\Models\Team;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
@@ -73,17 +74,20 @@ class ProjectController extends BaseController
 
     /**
      * Custom: Get projects for a specific team, with Caching.
+     *
+     * @param  Team $team
+     * @return JsonResponse
      */
-    public function getProjectsByTeam(int $teamId): JsonResponse
+    public function getProjectsByTeam(Team $team): JsonResponse
     {
-        $cacheKey = "projects:team:{$teamId}";
+        $cacheKey = "projects:team:{$team->Team_ID}";
         $cachedProjects = Cache::get($cacheKey);
 
         if ($cachedProjects) {
             $decodedProjects = json_decode($cachedProjects, true);
             $projects = collect($decodedProjects);
         } else {
-            $projects = Project::where('Team_ID', $teamId)->get();
+            $projects = Project::where('Team_ID', $team->Team_ID)->get();
 
             if ($projects->isNotEmpty()) {
                 Cache::put($cacheKey, $projects->toJson(), 600); // Cache 10 min

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Organisation;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Redis;
@@ -79,13 +80,13 @@ class OrganisationController extends BaseController
     /**
      * Display a listing of organisations based on User ID.
      *
-     * @param int $userId
+     * @param User $user
      * @return JsonResponse
      */
-    public function getOrganisationsByUser(int $userId): JsonResponse
+    public function getOrganisationsByUser(User $user): JsonResponse
     {
         // Try to get from Cache
-        $cacheKey = "organisations:user:{$userId}";
+        $cacheKey = "organisations:user:{$user->User_ID}";
         $cachedData = Cache::get($cacheKey);
         if ($cachedData) {
             $decodedData = json_decode($cachedData, true);
@@ -94,9 +95,9 @@ class OrganisationController extends BaseController
 
         // Get organisations where the user is the owner or the user is a member of a team within the organisation
         $organisations = Organisation::with(['teams.projects', 'teams.userSeats'])
-            ->where('User_ID', $userId)
-            ->orWhereHas('teams.userSeats', function ($query) use ($userId) {
-                $query->where('User_ID', $userId);  // Check if the user has a seat in any team within the organisation
+            ->where('User_ID', $user->User_ID)
+            ->orWhereHas('teams.userSeats', function ($query) use ($user) {
+                $query->where('User_ID', $user->User_ID);  // Check if the user has a seat in any team within the organisation
             })
             ->get();
 

@@ -87,29 +87,40 @@ class TaskController extends BaseController
     }
 
     /**
+     * OVERRIDE OF BASECONTROLLER STORE()
      * Custom store with Task_Key generation.
      */
     public function store(Request $request): JsonResponse
     {
+        // Validate the incoming request data using the defined rules
         $validated = $request->validate($this->rules());
 
+        // Get the Project_ID for the given Backlog_ID
         $projectId = Backlog::where('Backlog_ID', $validated['Backlog_ID'])->value('Project_ID');
+
+        // Get all backlogs for the project
         $backlogs = Backlog::where('Project_ID', $projectId)->get();
+
         $taskCount = 0;
 
+        // Count all tasks (including soft-deleted) across all backlogs in the project
         foreach ($backlogs as $backlog) {
             $taskCount += Task::withTrashed()->where('Backlog_ID', $backlog['Backlog_ID'])->count();
         }
 
+        // Generate the next Task_Key for the project
         $taskKey = $taskCount + 1;
 
+        // Create the new task with the generated Task_Key
         $task = Task::create(array_merge($validated, ['Task_Key' => $taskKey]));
 
         // Eager load the task relationships
         $task->load($this->with);
 
+        // Clear relevant cache after storing the task
         $this->afterStore($task);
 
+        // Return the created task as JSON with 201 status
         return response()->json($task, 201);
     }
 
@@ -135,11 +146,14 @@ class TaskController extends BaseController
      */
     public function getTaskByKeys(string $projectKey, int $taskKey): JsonResponse
     {
+        // Get the authenticated user
         $user = Auth::guard('api')->user();
         if (!$user) {
+            // Return 401 if not authenticated
             return response()->json(['error' => 'Not authenticated'], 401);
         }
 
+        // Find the project by key and check user access via organisation or user seat
         $project = Project::where('Project_Key', $projectKey)
             ->whereHas('team', function ($query) use ($user) {
                 $query->whereHas('organisation', function ($subQuery) use ($user) {
@@ -151,9 +165,11 @@ class TaskController extends BaseController
             ->first();
 
         if (!$project) {
+            // Return 404 if project not found or user has no access
             return response()->json(['message' => 'Project not found'], 404);
         }
 
+        // Find the task by Task_Key and Backlog_IDs belonging to the project
         $task = Task::with($this->with)
             ->where('Task_Key', $taskKey)
             ->where('Backlog_ID', function ($query) use ($project) {
@@ -164,9 +180,11 @@ class TaskController extends BaseController
             ->first();
 
         if (!$task) {
+            // Return 404 if task not found
             return response()->json(['message' => 'Task not found'], 404);
         }
 
+        // Return the found task with relationships
         return response()->json($task);
     }
 
