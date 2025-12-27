@@ -29,6 +29,9 @@ Make it executable: chmod +x deploy-scaleway.sh
 Run it: ./deploy-scaleway.sh
 
 ## PHP ARTISAN
+TEST:
+./vendor/bin/phpunit
+
 DATABASE STUFF:
     ## DROP all tables AND Recreate the tables by re-running all migrations
     migrate:fresh

@@ -14,23 +14,24 @@
     |
 */
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\BacklogController;
-use App\Http\Controllers\UserController;
-
-use App\Http\Controllers\OrganisationController;
-use App\Http\Controllers\ProjectController;
-use App\Http\Controllers\StatusController;
-use App\Http\Controllers\TaskCommentController;
-use App\Http\Controllers\TaskController;
-use App\Http\Controllers\TaskMediaFileController;
-use App\Http\Controllers\TaskTimeTrackController;
-use App\Http\Controllers\TeamController;
-use App\Http\Controllers\TeamUserSeatController;
-use App\Http\Controllers\UtilityController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\UserOnly;
 use Illuminate\Support\Facades\App;
+use App\Http\Controllers\{
+    AuthController,
+    UserController,
+    BacklogController,
+    OrganisationController,
+    ProjectController,
+    StatusController,
+    TaskCommentController,
+    TaskController,
+    TaskMediaFileController,
+    TaskTimeTrackController,
+    TeamController,
+    TeamUserSeatController,
+    UtilityController
+};
 
 $privateApiMiddleware = ['auth:api', UserOnly::class];
 $publicApiMiddleware = ['api'];

@@ -27,7 +27,7 @@ class AuthTest extends TestCase
         $response = $this->postJson('/api/auth/register', $data);
 
         $response->assertStatus(201)
-                 ->assertJsonFragment(['User_Email' => 'test@example.com']);
+            ->assertJsonFragment(['User_Email' => 'test@example.com']);
     }
 
     /**
@@ -43,7 +43,7 @@ class AuthTest extends TestCase
         $response = $this->postJson('/api/auth/register', $data);
 
         $response->assertStatus(400)
-                 ->assertJsonStructure(['errors']);
+            ->assertJsonStructure(['errors']);
     }
 
     /**
@@ -59,7 +59,7 @@ class AuthTest extends TestCase
             'User_Password' => $password,
         ]);
 
-        // $response->assertStatus(200)->assertJsonStructure(['token']);
+        $response->assertStatus(200)->assertJsonStructure(['token']);
     }
 
     /**
@@ -73,7 +73,7 @@ class AuthTest extends TestCase
         ]);
 
         $response->assertStatus(401)
-                 ->assertJson(['error' => 'Invalid email or password']);
+            ->assertJson(['error' => 'Invalid email or password']);
     }
 
     /**
@@ -87,7 +87,7 @@ class AuthTest extends TestCase
         $response = $this->getJson('/api/auth/me');
 
         $response->assertStatus(200)
-                 ->assertJsonFragment(['User_Email' => $user->User_Email]);
+            ->assertJsonFragment(['User_Email' => $user->User_Email]);
     }
 
     /**
@@ -98,7 +98,7 @@ class AuthTest extends TestCase
         $response = $this->getJson('/api/auth/me');
 
         $response->assertStatus(401)
-                 ->assertJson(['error' => 'Not authenticated']);
+            ->assertJsonFragment(['message' => 'Unauthenticated.']);
     }
 
     /**
@@ -112,7 +112,7 @@ class AuthTest extends TestCase
         $response = $this->postJson('/api/auth/logout');
 
         $response->assertStatus(200)
-                 ->assertJson(['message' => 'Logged out successfully']);
+            ->assertJson(['message' => 'Logged out successfully']);
     }
 
     /**
@@ -131,7 +131,7 @@ class AuthTest extends TestCase
         $response = $this->postJson('/api/auth/register', $data);
 
         $response->assertStatus(400)
-                 ->assertJsonStructure(['errors']);
+            ->assertJsonStructure(['errors']);
     }
 
     /**
@@ -141,8 +141,7 @@ class AuthTest extends TestCase
     {
         $response = $this->postJson('/api/auth/logout');
 
-        $response->assertStatus(200)
-                 ->assertJson(['message' => 'Logged out successfully']);
+        $response->assertStatus(401)
+            ->assertJson(['message' => 'Unauthenticated.']);
     }
 }
-?>
